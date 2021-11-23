@@ -1,0 +1,30 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Rattice</title>
+  <style>
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    .grid {
+        height: 120px;
+    }
+    .grid img {
+        max-height: 100%;
+        max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>{{ uri }}</h1>
+  <div class="grid-container">
+    {% for file in files %}
+    <div class="grid">
+      <img src="static/{{ file }}">
+      <div>{{ file }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</body>
+</html>
