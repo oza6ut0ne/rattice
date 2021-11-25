@@ -21,8 +21,10 @@
   <div class="grid-container">
     {% for file in files %}
     <div class="grid">
-      <img src="static/{{ file }}">
-      <div>{{ file }}</div>
+      <a href="/static/{{ file }}">
+        <img src="/static/{{ file }}">
+      </a>
+      <div>{{ file.trim_start_matches(uri.trim_start_matches("/")) }}</div>
     </div>
     {% endfor %}
   </div>

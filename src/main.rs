@@ -65,8 +65,8 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn list_files(_uri: &Uri) -> Result<Vec<String>> {
-    let mut entries = std::fs::read_dir(".")?
+fn list_files(uri: &Uri) -> Result<Vec<String>> {
+    let mut entries = std::fs::read_dir(format!(".{}", uri))?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, std::io::Error>>()?;
     entries.sort();
