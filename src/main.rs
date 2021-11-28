@@ -9,9 +9,9 @@ use axum::{
     routing::get_service,
     Router,
 };
-use tracing::Span;
 use std::{convert::Infallible, net::SocketAddr, time::Duration};
 use tower_http::{services::ServeDir, trace::TraceLayer};
+use tracing::Span;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -53,8 +53,8 @@ async fn main() -> Result<()> {
                         id = ?id, latency = ?latency, status = response.status().as_u16(),
                         "finished processing request"
                     )
-                })
-    );
+                }),
+        );
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     tracing::info!("listening on {}", addr);
@@ -78,10 +78,15 @@ fn list_files(uri: &Uri) -> Result<Vec<String>> {
 }
 
 async fn handle_404(uri: Uri) -> Result<impl IntoResponse, AppError> {
-    let files = list_files(&uri)?;
-    let template = RatticeTemplate { uri: uri.to_string(), files };
+    let files = match list_files(&uri) {
+        Ok(files) => files,
+        Err(_) => return Err(AppError::NotFound),
+    };
+    let template = RatticeTemplate {
+        uri: uri.to_string(),
+        files,
+    };
     Ok(HtmlTemplate(template))
-    // Ok((StatusCode::NOT_FOUND, Html("<h1>NOT FOUND</h1>")))
 }
 
 #[derive(Template)]
@@ -114,11 +119,14 @@ where
     }
 }
 
-struct AppError(anyhow::Error);
+enum AppError {
+    NotFound,
+    InternalServerError(anyhow::Error),
+}
 
 impl From<anyhow::Error> for AppError {
     fn from(error: anyhow::Error) -> Self {
-        AppError(error)
+        AppError::InternalServerError(error)
     }
 }
 
@@ -127,9 +135,18 @@ impl IntoResponse for AppError {
     type BodyError = Infallible;
 
     fn into_response(self) -> Response<Self::Body> {
-        Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(Full::from(self.0.to_string()))
-            .unwrap()
+        match self {
+            Self::NotFound => Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .body(Full::from("<h1>NOT FOUND</h1>"))
+                .unwrap(),
+            Self::InternalServerError(e) => {
+                tracing::error!("{:?}", e);
+                Response::builder()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .body(Full::from("<h1>Internal Server Error</h1>"))
+                    .unwrap()
+            }
+        }
     }
 }
