@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use askama::Template;
 use axum::{
     body::{Body, Bytes, Full},
@@ -9,7 +9,7 @@ use axum::{
     routing::get_service,
     Router,
 };
-use std::{convert::Infallible, net::SocketAddr, time::Duration};
+use std::{convert::Infallible, net::SocketAddr, path::Path, time::Duration};
 use tower_http::{services::ServeDir, trace::TraceLayer};
 use tracing::Span;
 
@@ -65,16 +65,18 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn list_files(uri: &Uri) -> Result<Vec<String>> {
-    let mut entries = std::fs::read_dir(format!(".{}", uri))?
+fn list_files(uri: &Uri) -> Result<Vec<File>> {
+    let entries = std::fs::read_dir(format!(".{}", uri))?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, std::io::Error>>()?;
-    entries.sort();
-    let paths = entries
+
+    let mut files = entries
         .iter()
-        .flat_map(|e| e.strip_prefix("./").map(|p| p.to_str().unwrap().to_owned()))
-        .collect::<Vec<_>>();
-    Ok(paths)
+        .map(|e| File::new(e))
+        .collect::<Result<Vec<_>>>()?;
+
+    files.sort();
+    Ok(files)
 }
 
 async fn handle_404(uri: Uri) -> Result<impl IntoResponse, AppError> {
@@ -89,11 +91,40 @@ async fn handle_404(uri: Uri) -> Result<impl IntoResponse, AppError> {
     Ok(HtmlTemplate(template))
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+enum File {
+    Directory { path: String, name: String },
+    File { path: String, name: String },
+}
+
+impl File {
+    pub fn new(path_buf: &Path) -> Result<File> {
+        let path = path_buf
+            .strip_prefix("./")?
+            .to_str()
+            .ok_or_else(|| anyhow!("Failed to convert path to &str: {:?}", path_buf))?
+            .to_owned();
+
+        let name = path_buf
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| path.clone());
+
+        let file = if path_buf.is_dir() {
+            Self::Directory { path, name }
+        } else {
+            Self::File { path, name }
+        };
+
+        Ok(file)
+    }
+}
+
 #[derive(Template)]
 #[template(path = "rattice.html")]
 struct RatticeTemplate {
     uri: String,
-    files: Vec<String>,
+    files: Vec<File>,
 }
 
 struct HtmlTemplate<T>(T);

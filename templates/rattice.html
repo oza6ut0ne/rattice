@@ -21,10 +21,17 @@
   <div class="grid-container">
     {% for file in files %}
     <div class="grid">
-      <a href="/static/{{ file }}">
-        <img src="/static/{{ file }}">
-      </a>
-      <div>{{ file.trim_start_matches(uri.trim_start_matches("/")) }}</div>
+      {% match file %}
+        {% when File::File with {path, name} %}
+          <a href="/static/{{ path }}">
+            <img src="/static/{{ path }}">
+          </a>
+          <div>{{ name }}</div>
+        {% when File::Directory with {path, name} %}
+          <a href="/{{ path }}">
+            <div>{{ name }}</div>
+          </a>
+      {% endmatch %}
     </div>
     {% endfor %}
   </div>
