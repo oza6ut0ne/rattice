@@ -10,6 +10,7 @@ askama = "0.10.5"
 axum = { git = "https://github.com/tokio-rs/axum.git" }
 clap = "2.33.3"
 hyper = { version = "0.14.15", features = ["full"] }
+percent-encoding = "2.1.0"
 tokio = { version = "1.14.0", features = ["full"] }
 tower = "0.4.11"
 tower-http = { version = "0.1.2", features = ["fs", "trace"] }

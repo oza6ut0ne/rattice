@@ -615,6 +615,7 @@ dependencies = [
  "axum",
  "clap",
  "hyper",
+ "percent-encoding",
  "tokio",
  "tower",
  "tower-http",

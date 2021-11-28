@@ -39,7 +39,10 @@ async fn main() -> Result<()> {
                         .get::<ConnectInfo<SocketAddr>>()
                         .map(|ci| ci.0.to_string())
                         .unwrap_or_else(|| "None".to_owned());
-                    tracing::debug_span!("", "{} {} {}", addr, request.method(), request.uri())
+                    let encoded_uri = request.uri().to_string();
+                    let decoded_uri =
+                        percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
+                    tracing::debug_span!("", "{} {} {}", addr, request.method(), decoded_uri)
                 })
                 .on_request(|request: &Request<_>, span: &Span| {
                     let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
@@ -65,7 +68,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn list_files(uri: &Uri) -> Result<Vec<File>> {
+fn list_files(uri: &str) -> Result<Vec<File>> {
     let entries = std::fs::read_dir(format!(".{}", uri))?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, std::io::Error>>()?;
@@ -80,12 +83,14 @@ fn list_files(uri: &Uri) -> Result<Vec<File>> {
 }
 
 async fn handle_404(uri: Uri) -> Result<impl IntoResponse, AppError> {
-    let files = match list_files(&uri) {
+    let encoded_uri = uri.to_string();
+    let decoded_uri = percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
+    let files = match list_files(&decoded_uri) {
         Ok(files) => files,
         Err(_) => return Err(AppError::NotFound),
     };
     let template = RatticeTemplate {
-        uri: uri.to_string(),
+        uri: decoded_uri.to_string(),
         files,
     };
     Ok(HtmlTemplate(template))
