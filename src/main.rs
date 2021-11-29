@@ -10,17 +10,20 @@ use axum::{
     Router,
 };
 use std::{convert::Infallible, net::SocketAddr, path::Path, time::Duration};
-use tower_http::{services::ServeDir, trace::TraceLayer};
+use tower_http::{auth::RequireAuthorizationLayer, services::ServeDir, trace::TraceLayer};
 use tracing::Span;
+
+mod cli;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "rattice=debug,tower_http=debug")
+    let opt = cli::Opt::init();
+    if let Some(path) = &opt.docroot {
+        tracing::info!("set document root to {}", path.display());
+        std::env::set_current_dir(path)?;
     }
-    tracing_subscriber::fmt::init();
 
-    let app = Router::new()
+    let mut app = Router::new()
         .nest(
             "/static",
             get_service(ServeDir::new(".")).handle_error(|error: std::io::Error| async move {
@@ -42,24 +45,40 @@ async fn main() -> Result<()> {
                     let encoded_uri = request.uri().to_string();
                     let decoded_uri =
                         percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
-                    tracing::debug_span!("", "{} {} {}", addr, request.method(), decoded_uri)
+                    tracing::info_span!("", "{} {} {}", addr, request.method(), decoded_uri)
                 })
-                .on_request(|request: &Request<_>, span: &Span| {
+                .on_request(move |request: &Request<_>, span: &Span| {
                     let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
                     tracing::debug!(id = ?id, "started processing request");
-                    tracing::trace!(id = ?id, "{:?}", request)
+                    if opt.verbose < 3 {
+                        tracing::trace!(id = ?id, "{:?}", request)
+                    } else {
+                        tracing::trace!(id = ?id, "{:#?}", request)
+                    }
                 })
                 .on_response(|response: &Response<_>, latency: Duration, span: &Span| {
                     let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
                     tracing::trace!(id = ?id, "{:?}", response);
-                    tracing::debug!(
-                        id = ?id, latency = ?latency, status = response.status().as_u16(),
-                        "finished processing request"
+                    tracing::info!(
+                        status = response.status().as_u16(), latency = ?latency, id = ?id
                     )
                 }),
         );
+    match (opt.username, opt.password) {
+        (None, None) => {}
+        (username, password) => {
+            tracing::info!("Basic Authentication enabled");
+            app = app.layer(RequireAuthorizationLayer::basic(
+                username.unwrap_or_else(|| "".to_owned()).as_str(),
+                password.unwrap_or_else(|| "".to_owned()).as_str(),
+            ));
+        }
+    }
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = match format!("{}:{}", opt.bind_address, opt.port).parse() {
+        Ok(addr) => addr,
+        Err(_) => format!("[{}]:{}", opt.bind_address, opt.port).parse()?,
+    };
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())
