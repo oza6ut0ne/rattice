@@ -1,3 +1,10 @@
+use std::{
+    convert::Infallible,
+    net::{SocketAddr, ToSocketAddrs},
+    path::Path,
+    time::Duration,
+};
+
 use anyhow::{anyhow, Result};
 use askama::Template;
 use axum::{
@@ -9,7 +16,6 @@ use axum::{
     routing::get_service,
     Router,
 };
-use std::{convert::Infallible, net::SocketAddr, path::Path, time::Duration};
 use tower_http::{auth::RequireAuthorizationLayer, services::ServeDir, trace::TraceLayer};
 use tracing::Span;
 
@@ -75,10 +81,11 @@ async fn main() -> Result<()> {
         }
     }
 
-    let addr = match format!("{}:{}", opt.bind_address, opt.port).parse() {
-        Ok(addr) => addr,
-        Err(_) => format!("[{}]:{}", opt.bind_address, opt.port).parse()?,
-    };
+    let addr = format!("{}:{}", opt.bind_address, opt.port)
+        .to_socket_addrs()?
+        .next()
+        .ok_or_else(|| anyhow!("Address is invalid {}:{}", opt.bind_address, opt.port))?;
+
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())
