@@ -70,15 +70,13 @@ async fn main() -> Result<()> {
                     )
                 }),
         );
-    match (opt.username, opt.password) {
-        (None, None) => {}
-        (username, password) => {
-            tracing::info!("Basic Authentication enabled");
-            app = app.layer(RequireAuthorizationLayer::basic(
-                username.unwrap_or_else(|| "".to_owned()).as_str(),
-                password.unwrap_or_else(|| "".to_owned()).as_str(),
-            ));
-        }
+
+    if opt.username.is_some() || opt.password.is_some() {
+        tracing::info!("Basic Authentication enabled");
+        app = app.layer(RequireAuthorizationLayer::basic(
+            opt.username.unwrap_or_else(|| "".to_owned()).as_str(),
+            opt.password.unwrap_or_else(|| "".to_owned()).as_str(),
+        ));
     }
 
     let addr = format!("{}:{}", opt.bind_address, opt.port)
