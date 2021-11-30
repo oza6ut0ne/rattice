@@ -14,6 +14,10 @@
         max-height: 100%;
         max-width: 100%;
     }
+    .grid video {
+        max-height: 100%;
+        max-width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -22,15 +26,28 @@
     {% for file in files %}
     <div class="grid">
       {% match file %}
-        {% when File::File with {path, name} %}
-          <a href="/static/{{ path }}">
-            <img src="/static/{{ path }}">
-          </a>
-          <div>{{ name }}</div>
         {% when File::Directory with {path, name} %}
           <a href="/{{ path }}">
-            <div>{{ name }}</div>
+            <div>{{ name }}/</div>
           </a>
+        {% when File::File with {path, name, media_type} %}
+          {% if file.is_image() %}
+            <a href="/static/{{ path }}">
+                <img src="/static/{{ path }}">
+                <div>{{ name }}</div>
+            </a>
+            <div>{{ name }}</div>
+          {% else if file.is_video() %}
+            <a href="/static/{{ path }}">
+                <video controls src="/static/{{ path }}">
+                <div>{{ name }}</div>
+            </a>
+            <div>{{ name }}</div>
+          {% else %}
+            <a href="/static/{{ path }}">
+                <div>{{ name }}</div>
+            </a>
+          {% endif %}
       {% endmatch %}
     </div>
     {% endfor %}
