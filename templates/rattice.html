@@ -9,13 +9,16 @@
     }
     .grid {
         height: 120px;
+        border: ridge;
     }
-    .grid img {
-        max-height: 100%;
-        max-width: 100%;
+    .grid .name {
+        height: 20%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
     }
-    .grid video {
-        max-height: 100%;
+    .grid .content {
+        height: 80%;
         max-width: 100%;
     }
   </style>
@@ -24,30 +27,25 @@
   <h1>{{ uri }}</h1>
   <div class="grid-container">
     {% for file in files %}
-    <div class="grid">
+    <div class="grid" title="{{ file.name() }}">
       {% match file %}
         {% when File::Directory with {path, name} %}
-          <a href="/{{ path }}">
-            <div>{{ name }}/</div>
-          </a>
+          <div class="name">
+            <a href="/{{ path }}">{{ name }}/</a>
+          </div>
         {% when File::File with {path, name, media_type} %}
           {% if file.is_image() %}
             <a href="/static/{{ path }}">
-                <img src="/static/{{ path }}">
-                <div>{{ name }}</div>
+              <img class="content" src="/static/{{ path }}">
             </a>
-            <div>{{ name }}</div>
           {% else if file.is_video() %}
             <a href="/static/{{ path }}">
-                <video controls src="/static/{{ path }}">
-                <div>{{ name }}</div>
-            </a>
-            <div>{{ name }}</div>
-          {% else %}
-            <a href="/static/{{ path }}">
-                <div>{{ name }}</div>
+              <video class="content" src="/static/{{ path }}" controls>
             </a>
           {% endif %}
+          <div class="name">
+            <a href="/static/{{ path }}">{{ name }}</a>
+          </div>
       {% endmatch %}
     </div>
     {% endfor %}

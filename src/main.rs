@@ -196,6 +196,17 @@ impl File {
         Ok(file)
     }
 
+    pub fn name(&self) -> String {
+        match self {
+            Self::Directory { path: _, name } => name.clone(),
+            Self::File {
+                path: _,
+                name,
+                media_type: _,
+            } => name.clone(),
+        }
+    }
+
     pub fn is_image(&self) -> bool {
         matches!(
             self,
