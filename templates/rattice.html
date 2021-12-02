@@ -1,16 +1,31 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Rattice</title>
+  <meta name="viewport" content="width=device-width">
+  <title>Rattice {{ uri }}</title>
+
   <style>
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    @media screen and (max-width: 500px) {
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+      .grid {
+          height: 110px;
+          border: ridge;
+      }
     }
-    .grid {
-        height: 120px;
-        border: ridge;
+    @media screen and (min-width: 501px) {
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+      .grid {
+          height: 150px;
+          border: ridge;
+      }
     }
+
     .grid .name {
         height: 20%;
         text-overflow: ellipsis;
@@ -21,11 +36,22 @@
         height: 80%;
         max-width: 100%;
     }
+    h1 {
+      margin-block-end: 0.32em;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    #slider {
+      margin-bottom: 4;
+    }
   </style>
 </head>
+
 <body>
   <h1>{{ uri }}</h1>
-  <div class="grid-container">
+  <input id="slider" type="range" value="1" min="0.8" max="1.4" step="0.2">
+
+  <div id="grid-container" class="grid-container">
     {% for file in files %}
     <div class="grid" title="{{ file.name() }}">
       {% match file %}
@@ -50,5 +76,42 @@
     </div>
     {% endfor %}
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let defaultHeight;
+      let defaultWidth;
+      const resize = (scale) => {
+        let height = defaultHeight * scale;
+        let width = defaultWidth * scale;
+        container.style.gridTemplateColumns = "repeat(auto-fill, minmax(" + width + "px, 1fr))";
+        for (grid of grids){
+          grid.style.height = height + "px";
+        }
+      }
+
+      const slider = document.getElementById("slider");
+      const container = document.getElementById("grid-container");
+      const grids = document.getElementsByClassName("grid");
+      const onScaleChange = (e) => {
+        resize(e.target.value);
+      }
+      slider.addEventListener('input', onScaleChange);
+
+      const mediaQuery = window.matchMedia('(max-width: 500px)');
+      const onMediaQueryChange = (e) => {
+        if (e.matches) {
+          defaultHeight = 110;
+          defaultWidth = 120;
+        } else {
+          defaultHeight = 150;
+          defaultWidth = 200;
+        }
+        resize(slider.value);
+      }
+      onMediaQueryChange(mediaQuery);
+      mediaQuery.addListener(onMediaQueryChange);
+    })
+  </script>
 </body>
 </html>
