@@ -19,8 +19,8 @@ pub struct Opt {
     #[structopt(short, long, name = "address", default_value = "::")]
     pub bind_address: String,
 
-    /// Change document root
-    #[structopt(short, long, parse(from_os_str), name = "path")]
+    /// Specify document root directory
+    #[structopt(short, long, parse(from_os_str))]
     pub docroot: Option<PathBuf>,
 
     /// Username for Basic Authentication [env: RATTICE_USER]
@@ -35,7 +35,15 @@ pub struct Opt {
     #[structopt(short, long, name = "length")]
     random_credencial: Option<u8>,
 
-    /// Increase log level (-v, -vv, -vvv)
+    /// Specify server certificate file and enable HTTPS
+    #[structopt(short, long, parse(from_os_str), requires = "server-key")]
+    pub server_cert: Option<PathBuf>,
+
+    /// Specify server key file and enable HTTPS
+    #[structopt(short = "k", long, parse(from_os_str), requires = "server-cert")]
+    pub server_key: Option<PathBuf>,
+
+    /// Increase log level (-v, -vv, -vvv, -vvvv)
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
 }
