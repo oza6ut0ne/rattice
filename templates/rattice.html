@@ -57,20 +57,20 @@
       {% match file %}
         {% when File::Directory with {path, name} %}
           <div class="name">
-            <a href="/{{ path }}">{{ name }}/</a>
+            <a href="/{{ path }}/">{{ name }}/</a>
           </div>
         {% when File::File with {path, name, media_type} %}
           {% if file.is_image() %}
-            <a href="/static/{{ path }}">
-              <img class="content" src="/static/{{ path }}">
+            <a href="/{{ path }}">
+              <img class="content" src="/{{ path }}">
             </a>
           {% else if file.is_video() %}
-            <a href="/static/{{ path }}">
-              <video class="content" src="/static/{{ path }}" controls>
+            <a href="/{{ path }}">
+              <video class="content" src="/{{ path }}" controls>
             </a>
           {% endif %}
           <div class="name">
-            <a href="/static/{{ path }}">{{ name }}</a>
+            <a href="/{{ path }}">{{ name }}</a>
           </div>
       {% endmatch %}
     </div>

@@ -9,12 +9,12 @@ use askama::Template;
 use axum::{
     body::{self, Body, BoxBody, Full},
     extract::ConnectInfo,
-    handler::Handler as _,
     http::{Request, Response, StatusCode, Uri},
     response::{Html, IntoResponse},
-    routing::get_service,
+    routing::get,
     Router,
 };
+use tower::ServiceExt;
 use tower_http::{auth::RequireAuthorizationLayer, services::ServeDir, trace::TraceLayer};
 use tracing::Span;
 
@@ -38,47 +38,36 @@ async fn main() -> Result<()> {
         std::env::set_current_dir(path)?;
     }
 
-    let mut app = Router::new()
-        .nest(
-            "/static",
-            get_service(ServeDir::new(".")).handle_error(|error: std::io::Error| async move {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Unhandled internal error: {}", error),
+    let mut app = Router::new().nest("/", get(handle_request)).layer(
+        TraceLayer::new_for_http()
+            .make_span_with(|request: &Request<Body>| {
+                let addr = request
+                    .extensions()
+                    .get::<ConnectInfo<SocketAddr>>()
+                    .map(|ci| ci.0.to_string())
+                    .unwrap_or_else(|| "None".to_owned());
+                let encoded_uri = request.uri().to_string();
+                let decoded_uri =
+                    percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
+                tracing::info_span!("", "{} {} {}", addr, request.method(), decoded_uri)
+            })
+            .on_request(move |request: &Request<_>, span: &Span| {
+                let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
+                tracing::debug!(id = ?id, "started processing request");
+                if opt.verbose < 3 {
+                    tracing::trace!(id = ?id, "{:?}", request)
+                } else {
+                    tracing::trace!(id = ?id, "{:#?}", request)
+                }
+            })
+            .on_response(|response: &Response<_>, latency: Duration, span: &Span| {
+                let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
+                tracing::trace!(id = ?id, "{:?}", response);
+                tracing::info!(
+                    status = response.status().as_u16(), latency = ?latency, id = ?id
                 )
             }),
-        )
-        .fallback(handle_404.into_service())
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(|request: &Request<Body>| {
-                    let addr = request
-                        .extensions()
-                        .get::<ConnectInfo<SocketAddr>>()
-                        .map(|ci| ci.0.to_string())
-                        .unwrap_or_else(|| "None".to_owned());
-                    let encoded_uri = request.uri().to_string();
-                    let decoded_uri =
-                        percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
-                    tracing::info_span!("", "{} {} {}", addr, request.method(), decoded_uri)
-                })
-                .on_request(move |request: &Request<_>, span: &Span| {
-                    let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
-                    tracing::debug!(id = ?id, "started processing request");
-                    if opt.verbose < 3 {
-                        tracing::trace!(id = ?id, "{:?}", request)
-                    } else {
-                        tracing::trace!(id = ?id, "{:#?}", request)
-                    }
-                })
-                .on_response(|response: &Response<_>, latency: Duration, span: &Span| {
-                    let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
-                    tracing::trace!(id = ?id, "{:?}", response);
-                    tracing::info!(
-                        status = response.status().as_u16(), latency = ?latency, id = ?id
-                    )
-                }),
-        );
+    );
 
     if opt.username.is_some() || opt.password.is_some() {
         tracing::info!("Basic Authentication enabled");
@@ -115,18 +104,34 @@ fn list_files(uri: &str) -> Result<Vec<File>> {
     Ok(files)
 }
 
-async fn handle_404(uri: Uri) -> Result<impl IntoResponse, AppError> {
+async fn serve_file(uri: Uri) -> Result<Response<BoxBody>, AppError> {
+    let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
+    ServeDir::new(".")
+        .oneshot(req)
+        .await
+        .map_err(|e| anyhow!(e).into())
+        .map(|res| {
+            let res = res.into_response();
+            if res.status() == StatusCode::NOT_FOUND {
+                AppError::NotFound.into_response()
+            } else {
+                res
+            }
+        })
+}
+
+async fn handle_request(uri: Uri) -> Result<Response<BoxBody>, AppError> {
     let encoded_uri = uri.to_string();
     let decoded_uri = percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
     let files = match list_files(&decoded_uri) {
         Ok(files) => files,
-        Err(_) => return Err(AppError::NotFound),
+        Err(_) => return serve_file(uri).await,
     };
     let template = RatticeTemplate {
         uri: decoded_uri.to_string(),
         files,
     };
-    Ok(HtmlTemplate(template))
+    Ok(HtmlTemplate(template).into_response())
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
