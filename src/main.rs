@@ -1,5 +1,4 @@
 use std::{
-    convert::Infallible,
     net::{SocketAddr, ToSocketAddrs},
     path::Path,
     time::Duration,
@@ -8,7 +7,7 @@ use std::{
 use anyhow::{anyhow, Result};
 use askama::Template;
 use axum::{
-    body::{Body, Bytes, Full},
+    body::{self, Body, BoxBody, Full},
     extract::ConnectInfo,
     handler::Handler as _,
     http::{Request, Response, StatusCode, Uri},
@@ -243,18 +242,15 @@ impl<T> IntoResponse for HtmlTemplate<T>
 where
     T: Template,
 {
-    type Body = Full<Bytes>;
-    type BodyError = Infallible;
-
-    fn into_response(self) -> Response<Self::Body> {
+    fn into_response(self) -> Response<BoxBody> {
         match self.0.render() {
             Ok(html) => Html(html).into_response(),
             Err(err) => Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(Full::from(format!(
+                .body(body::boxed(Full::from(format!(
                     "Failed to render template. Error: {}",
                     err
-                )))
+                ))))
                 .unwrap(),
         }
     }
@@ -272,20 +268,17 @@ impl From<anyhow::Error> for AppError {
 }
 
 impl IntoResponse for AppError {
-    type Body = Full<Bytes>;
-    type BodyError = Infallible;
-
-    fn into_response(self) -> Response<Self::Body> {
+    fn into_response(self) -> Response<BoxBody> {
         match self {
             Self::NotFound => Response::builder()
                 .status(StatusCode::NOT_FOUND)
-                .body(Full::from("<h1>NOT FOUND</h1>"))
+                .body(body::boxed(Full::from("<h1>NOT FOUND</h1>")))
                 .unwrap(),
             Self::InternalServerError(e) => {
                 tracing::error!("{:?}", e);
                 Response::builder()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body(Full::from("<h1>Internal Server Error</h1>"))
+                    .body(body::boxed(Full::from("<h1>Internal Server Error</h1>")))
                     .unwrap()
             }
         }

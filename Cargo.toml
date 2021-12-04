@@ -6,8 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.47"
 askama = "0.10.5"
-# axum = "0.3.4"
-axum = { git = "https://github.com/tokio-rs/axum.git" }
+axum = "0.4.0"
 clap = "2.33.3"
 hyper = { version = "0.14.15", features = ["full"] }
 percent-encoding = "2.1.0"
