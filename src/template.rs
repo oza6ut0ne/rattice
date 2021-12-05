@@ -1,11 +1,12 @@
+use anyhow::anyhow;
 use askama::Template;
 use axum::{
-    body::{self, BoxBody, Full},
-    http::{Response, StatusCode},
+    body::BoxBody,
+    http::Response,
     response::{Html, IntoResponse},
 };
 
-use crate::model::File;
+use crate::{error::AppError, model::File};
 
 #[derive(Template)]
 #[template(path = "rattice.html")]
@@ -23,13 +24,7 @@ where
     fn into_response(self) -> Response<BoxBody> {
         match self.0.render() {
             Ok(html) => Html(html).into_response(),
-            Err(err) => Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(body::boxed(Full::from(format!(
-                    "Failed to render template. Error: {}",
-                    err
-                ))))
-                .unwrap(),
+            Err(e) => AppError::from(anyhow!(e)).into_response(),
         }
     }
 }
