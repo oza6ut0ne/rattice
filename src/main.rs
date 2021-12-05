@@ -34,6 +34,7 @@ async fn main() -> Result<()> {
             opt.server_key.as_ref().unwrap(),
         )
         .await?;
+
         tracing::info!("listening on {}", addr);
         axum_server::bind_rustls(addr, config)
             .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())

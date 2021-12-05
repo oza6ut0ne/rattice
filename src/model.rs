@@ -36,7 +36,7 @@ impl MediaType {
     pub fn new(path: &Path) -> Self {
         match path
             .extension()
-            .map(|e| e.to_string_lossy().to_string().to_ascii_lowercase())
+            .map(|e| e.to_string_lossy().to_ascii_lowercase())
         {
             Some(ext) => {
                 if IMAGE_EXTTENSIONS.contains(&ext.as_str()) {
