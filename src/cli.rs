@@ -6,7 +6,7 @@ use structopt::{clap::AppSettings::DeriveDisplayOrder, StructOpt};
 const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                             abcdefghijklmnopqrstuvwxyz\
                             0123456789\
-                            !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+                            !\"#$%&'()*+,-./;<=>?@[\\]^_`{|}~";
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "Rattice", setting(DeriveDisplayOrder))]
@@ -65,6 +65,11 @@ impl Opt {
 
         opt.username = opt.username.or_else(|| std::env::var("RATTICE_USER").ok());
         opt.password = opt.password.or_else(|| std::env::var("RATTICE_PASS").ok());
+
+        if opt.username.is_some() && opt.username.clone().unwrap().contains(':') {
+            eprintln!("error: Colon ':' is not allowed for username");
+            std::process::exit(1);
+        }
 
         if let Some(length) = opt.random_credencial {
             opt.username = opt.username.or_else(|| {
