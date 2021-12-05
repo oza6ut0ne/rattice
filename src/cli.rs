@@ -83,6 +83,12 @@ impl Opt {
                 Some(password)
             });
         }
+
+        match opt.verbose.cmp(&3) {
+            std::cmp::Ordering::Equal => tracing::trace!("{:?}", opt),
+            std::cmp::Ordering::Greater => tracing::trace!("{:#?}", opt),
+            _ => {}
+        }
         opt
     }
 }
