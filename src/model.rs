@@ -78,14 +78,14 @@ impl File {
         Ok(file)
     }
 
-    pub fn name(&self) -> String {
+    pub fn name(&self) -> &str {
         match self {
-            Self::Directory { path: _, name } => name.clone(),
+            Self::Directory { path: _, name } => name,
             Self::File {
                 path: _,
                 name,
                 media_type: _,
-            } => name.clone(),
+            } => name,
         }
     }
 

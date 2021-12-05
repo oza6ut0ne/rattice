@@ -84,7 +84,7 @@ impl Opt {
         opt.username = opt.username.or_else(|| std::env::var("RATTICE_USER").ok());
         opt.password = opt.password.or_else(|| std::env::var("RATTICE_PASS").ok());
 
-        if opt.username.is_some() && opt.username.clone().unwrap().contains(':') {
+        if opt.username.is_some() && opt.username.as_ref().unwrap().contains(':') {
             eprintln!("error: Colon ':' is not allowed for username");
             std::process::exit(1);
         }
