@@ -12,15 +12,21 @@ const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
 #[structopt(name = "Rattice", setting(DeriveDisplayOrder))]
 pub struct Opt {
     /// Listen port
-    #[structopt(name = "PORT", default_value = "3000")]
+    #[structopt(name = "PORT", default_value = "3000", env = "RATTICE_PORT")]
     pub port: u16,
 
     /// Bind address
-    #[structopt(short, long, name = "address", default_value = "::")]
+    #[structopt(
+        short,
+        long,
+        name = "address",
+        default_value = "::",
+        env = "RATTICE_BIND_ADDR"
+    )]
     pub bind_address: String,
 
     /// Specify document root directory
-    #[structopt(short, long, parse(from_os_str))]
+    #[structopt(short, long, parse(from_os_str), env = "RATTICE_DOCROOT")]
     pub docroot: Option<PathBuf>,
 
     /// Username for Basic Authentication [env: RATTICE_USER]
@@ -35,12 +41,24 @@ pub struct Opt {
     #[structopt(short, long, name = "length")]
     random_credencial: Option<u8>,
 
-    /// Specify server certificate file and enable HTTPS
-    #[structopt(short, long, parse(from_os_str), requires = "server-key")]
+    /// Server certificate file for HTTPS
+    #[structopt(
+        short,
+        long,
+        parse(from_os_str),
+        requires = "server-key",
+        env = "RATTICE_SERVER_CERT"
+    )]
     pub server_cert: Option<PathBuf>,
 
-    /// Specify server key file and enable HTTPS
-    #[structopt(short = "k", long, parse(from_os_str), requires = "server-cert")]
+    /// Server key file for HTTPS
+    #[structopt(
+        short = "k",
+        long,
+        parse(from_os_str),
+        requires = "server-cert",
+        env = "RATTICE_SERVER_KEY"
+    )]
     pub server_key: Option<PathBuf>,
 
     /// Increase log level (-v, -vv, -vvv, -vvvv)
