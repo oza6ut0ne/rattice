@@ -1,6 +1,9 @@
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
+use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+
+const FRAGMENT: &AsciiSet = &NON_ALPHANUMERIC.remove(b'/').remove(b'.');
 
 const IMAGE_EXTTENSIONS: &[&str] = &[
     "apng", "avif", "gif", "jpg", "jpeg", "jfif", "pjpeg", "pjp", "png", "svg", "webp", "bmp",
@@ -22,12 +25,12 @@ pub(crate) enum MediaType {
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum File {
     Directory {
-        path: String,
         name: String,
+        path: String,
     },
     File {
-        path: String,
         name: String,
+        path: String,
         media_type: MediaType,
     },
 }
@@ -57,8 +60,8 @@ impl File {
         let path = path_buf
             .strip_prefix("./")?
             .to_str()
-            .ok_or_else(|| anyhow!("Failed to convert path to &str: {:?}", path_buf))?
-            .to_owned();
+            .map(|p| utf8_percent_encode(p, FRAGMENT).to_string())
+            .ok_or_else(|| anyhow!("Failed to convert path to &str: {:?}", path_buf))?;
 
         let name = path_buf
             .file_name()
@@ -66,11 +69,11 @@ impl File {
             .unwrap_or_else(|| path.clone());
 
         let file = if path_buf.is_dir() {
-            Self::Directory { path, name }
+            Self::Directory { name, path }
         } else {
             Self::File {
-                path,
                 name,
+                path,
                 media_type: MediaType::new(path_buf),
             }
         };
@@ -80,10 +83,10 @@ impl File {
 
     pub fn name(&self) -> &str {
         match self {
-            Self::Directory { path: _, name } => name,
+            Self::Directory { name, path: _ } => name,
             Self::File {
-                path: _,
                 name,
+                path: _,
                 media_type: _,
             } => name,
         }
@@ -93,8 +96,8 @@ impl File {
         matches!(
             self,
             Self::File {
-                path: _,
                 name: _,
+                path: _,
                 media_type: MediaType::Image,
             }
         )
@@ -104,8 +107,8 @@ impl File {
         matches!(
             self,
             Self::File {
-                path: _,
                 name: _,
+                path: _,
                 media_type: MediaType::Video,
             }
         )
