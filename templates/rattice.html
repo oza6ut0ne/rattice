@@ -81,9 +81,11 @@
     document.addEventListener('DOMContentLoaded', () => {
       let defaultHeight;
       let defaultWidth;
+      const container = document.getElementById("grid-container");
+      const grids = document.getElementsByClassName("grid");
       const resize = (scale) => {
-        let height = defaultHeight * scale;
-        let width = defaultWidth * scale;
+        const height = defaultHeight * scale;
+        const width = defaultWidth * scale;
         container.style.gridTemplateColumns = "repeat(auto-fill, minmax(" + width + "px, 1fr))";
         for (grid of grids){
           grid.style.height = height + "px";
@@ -91,8 +93,6 @@
       }
 
       const slider = document.getElementById("slider");
-      const container = document.getElementById("grid-container");
-      const grids = document.getElementsByClassName("grid");
       const onScaleChange = (e) => {
         localStorage.scale = e.target.value;
         resize(e.target.value);
