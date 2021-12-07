@@ -62,11 +62,11 @@
         {% when File::File with {name, path, media_type} %}
           {% if file.is_image() %}
             <a href="/{{ path }}">
-              <img class="content" src="/{{ path }}">
+              <img class="content" src="/{{ path }}" loading="lazy">
             </a>
           {% else if file.is_video() %}
             <a href="/{{ path }}">
-              <video class="content" src="/{{ path }}" controls>
+              <video class="content" src="/{{ path }}" controls preload="metadata">
             </a>
           {% endif %}
           <div class="name">
