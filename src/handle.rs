@@ -34,17 +34,13 @@ async fn handle_request(uri: Uri) -> Result<Response<BoxBody>, AppError> {
 
 async fn serve_file(uri: &Uri) -> Result<Response<BoxBody>, AppError> {
     let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
-    ServeDir::new(".").oneshot(req).await.map_or_else(
-        |e| Err(anyhow!(e).into()),
-        |res| {
-            let res = res.into_response();
-            if res.status() == StatusCode::NOT_FOUND {
-                Err(AppError::NotFound)
-            } else {
-                Ok(res)
-            }
+    match ServeDir::new(".").oneshot(req).await {
+        Ok(res) => match res.status() {
+            StatusCode::NOT_FOUND => Err(AppError::NotFound),
+            _ => Ok(res.into_response()),
         },
-    )
+        Err(e) => Err(anyhow!(e).into()),
+    }
 }
 
 fn list_files(uri: &str) -> Result<Vec<File>> {
