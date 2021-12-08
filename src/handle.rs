@@ -24,10 +24,7 @@ async fn handle_request(uri: Uri) -> Result<Response<BoxBody>, AppError> {
         Ok(files) => files,
         Err(_) => return serve_file(uri).await,
     };
-    let template = RatticeTemplate {
-        uri: decoded_uri.to_string(),
-        files,
-    };
+    let template = RatticeTemplate::new(decoded_uri.to_string(), files);
     Ok(HtmlTemplate(template).into_response())
 }
 

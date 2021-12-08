@@ -11,8 +11,19 @@ use crate::{error::AppError, model::File};
 #[derive(Template)]
 #[template(path = "rattice.html")]
 pub(crate) struct RatticeTemplate {
-    pub uri: String,
-    pub files: Vec<File>,
+    uri: String,
+    files: Vec<File>,
+    lazy: bool,
+}
+
+impl RatticeTemplate {
+    pub fn new(uri: String, files: Vec<File>) -> RatticeTemplate {
+        RatticeTemplate {
+            uri,
+            files,
+            lazy: std::env::var_os("RATTICE_EAGER").is_none(),
+        }
+    }
 }
 
 pub(crate) struct HtmlTemplate<T>(pub T);

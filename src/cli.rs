@@ -29,6 +29,10 @@ pub struct Opt {
     #[structopt(short, long, parse(from_os_str), env = "RATTICE_DOCROOT")]
     pub docroot: Option<PathBuf>,
 
+    /// Disable lazy image loading [env: RATTICE_EAGER]
+    #[structopt(short, long)]
+    eager: bool,
+
     /// Username for Basic Authentication
     #[structopt(short, long, env = "RATTICE_USER", hide_env_values = true)]
     pub username: Option<String>,
@@ -97,6 +101,10 @@ impl Opt {
                 tracing::info!("generated random password = {}", password);
                 Some(password)
             });
+        }
+
+        if opt.eager {
+            std::env::set_var("RATTICE_EAGER", "1")
         }
 
         match opt.verbose.cmp(&3) {
