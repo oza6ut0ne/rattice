@@ -18,36 +18,39 @@ pub fn add_handler(app: Router) -> Router {
 }
 
 async fn handle_request(uri: Uri) -> Result<Response<BoxBody>, AppError> {
+    let file_response = serve_file(&uri).await;
+    if file_response.is_ok() {
+        return file_response;
+    }
     let encoded_uri = uri.path().to_string();
     let decoded_uri = percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
     let files = match list_files(&decoded_uri) {
         Ok(files) => files,
-        Err(_) => return serve_file(uri).await,
+        Err(_) => return Err(AppError::NotFound),
     };
     let template = RatticeTemplate::new(decoded_uri.to_string(), files);
     Ok(HtmlTemplate(template).into_response())
 }
 
-async fn serve_file(uri: Uri) -> Result<Response<BoxBody>, AppError> {
+async fn serve_file(uri: &Uri) -> Result<Response<BoxBody>, AppError> {
     let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
-    ServeDir::new(".")
-        .oneshot(req)
-        .await
-        .map_err(|e| anyhow!(e).into())
-        .map(|res| {
+    ServeDir::new(".").oneshot(req).await.map_or_else(
+        |e| Err(anyhow!(e).into()),
+        |res| {
             let res = res.into_response();
             if res.status() == StatusCode::NOT_FOUND {
-                AppError::NotFound.into_response()
+                Err(AppError::NotFound)
             } else {
-                res
+                Ok(res)
             }
-        })
+        },
+    )
 }
 
 fn list_files(uri: &str) -> Result<Vec<File>> {
     let entries = std::fs::read_dir(format!(".{}", uri))?
         .map(|res| res.map(|e| e.path()))
-        .collect::<Result<Vec<_>, std::io::Error>>()?;
+        .collect::<Result<Vec<_>, _>>()?;
 
     let mut files = entries
         .iter()
