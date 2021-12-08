@@ -29,12 +29,12 @@ pub struct Opt {
     #[structopt(short, long, parse(from_os_str), env = "RATTICE_DOCROOT")]
     pub docroot: Option<PathBuf>,
 
-    /// Username for Basic Authentication [env: RATTICE_USER]
-    #[structopt(short, long)]
+    /// Username for Basic Authentication
+    #[structopt(short, long, env = "RATTICE_USER", hide_env_values = true)]
     pub username: Option<String>,
 
-    /// Password for Basic Authentication [env: RATTICE_PASS]
-    #[structopt(short, long)]
+    /// Password for Basic Authentication
+    #[structopt(short, long, env = "RATTICE_PASS", hide_env_values = true)]
     pub password: Option<String>,
 
     /// Generate random username and/or password with given length
@@ -81,11 +81,8 @@ impl Opt {
         }
         tracing_subscriber::fmt::init();
 
-        opt.username = opt.username.or_else(|| std::env::var("RATTICE_USER").ok());
-        opt.password = opt.password.or_else(|| std::env::var("RATTICE_PASS").ok());
-
         if opt.username.is_some() && opt.username.as_ref().unwrap().contains(':') {
-            eprintln!("error: Colon ':' is not allowed for username");
+            tracing::error!("Colon ':' is not allowed for username");
             std::process::exit(1);
         }
 
