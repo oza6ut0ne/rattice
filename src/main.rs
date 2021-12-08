@@ -11,7 +11,10 @@ mod cli;
 async fn main() -> Result<()> {
     let opt = cli::Opt::init();
     if let Some(path) = &opt.docroot {
-        tracing::info!("set document root to {}", path.display());
+        tracing::info!(
+            "set document root to {}",
+            path.canonicalize().as_ref().unwrap_or(path).display()
+        );
         std::env::set_current_dir(path)?;
     }
 
