@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use anyhow::{bail, Result};
 use rand::Rng;
 use structopt::{clap::AppSettings::DeriveDisplayOrder, StructOpt};
 
@@ -25,13 +26,13 @@ pub struct Opt {
     )]
     pub bind_address: String,
 
-    /// Specify document root directory
-    #[structopt(short, long, parse(from_os_str), env = "RATTICE_DOCROOT")]
-    pub docroot: Option<PathBuf>,
-
     /// Disable lazy image loading [env: RATTICE_EAGER]
     #[structopt(short, long)]
     eager: bool,
+
+    /// Specify document root directory
+    #[structopt(short, long, parse(from_os_str), env = "RATTICE_DOCROOT")]
+    pub docroot: Option<PathBuf>,
 
     /// Username for Basic Authentication
     #[structopt(short, long, env = "RATTICE_USER", hide_env_values = true)]
@@ -71,7 +72,7 @@ pub struct Opt {
 }
 
 impl Opt {
-    pub fn init() -> Opt {
+    pub fn init() -> Result<Opt> {
         let mut opt = Self::from_args();
         if std::env::var_os("RUST_LOG").is_none() {
             std::env::set_var(
@@ -84,10 +85,14 @@ impl Opt {
             )
         }
         tracing_subscriber::fmt::init();
+        match opt.verbose.cmp(&3) {
+            std::cmp::Ordering::Equal => tracing::trace!("{:?}", opt),
+            std::cmp::Ordering::Greater => tracing::trace!("{:#?}", opt),
+            _ => {}
+        }
 
         if opt.username.is_some() && opt.username.as_ref().unwrap().contains(':') {
-            tracing::error!("Colon ':' is not allowed for username");
-            std::process::exit(1);
+            bail!("Colon ':' is not allowed for username");
         }
 
         if let Some(length) = opt.random_credencial {
@@ -103,6 +108,16 @@ impl Opt {
             });
         }
 
+        if let Some(docroot) = opt.docroot {
+            opt.docroot = Some(docroot.canonicalize()?)
+        }
+        if let Some(cert) = opt.server_cert {
+            opt.server_cert = Some(cert.canonicalize()?)
+        }
+        if let Some(key) = opt.server_key {
+            opt.server_key = Some(key.canonicalize()?)
+        }
+
         if opt.eager {
             std::env::set_var("RATTICE_EAGER", "1")
         }
@@ -112,7 +127,7 @@ impl Opt {
             std::cmp::Ordering::Greater => tracing::trace!("{:#?}", opt),
             _ => {}
         }
-        opt
+        Ok(opt)
     }
 }
 
