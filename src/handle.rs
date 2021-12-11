@@ -34,7 +34,11 @@ async fn handle_request(uri: Uri) -> Result<Response<BoxBody>, AppError> {
 
 async fn serve_file(uri: &Uri) -> Result<Response<BoxBody>, AppError> {
     let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
-    match ServeDir::new(".").oneshot(req).await {
+    match ServeDir::new(".")
+        .append_index_html_on_directories(false)
+        .oneshot(req)
+        .await
+    {
         Ok(res) => match res.status() {
             StatusCode::NOT_FOUND => Err(AppError::NotFound),
             _ => Ok(res.into_response()),
