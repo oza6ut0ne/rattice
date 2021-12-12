@@ -56,29 +56,40 @@ impl MediaType {
 }
 
 impl File {
-    pub fn new(path_buf: &Path) -> Result<File> {
-        let path = path_buf
-            .strip_prefix("./")?
-            .to_str()
-            .map(|p| utf8_percent_encode(p, FRAGMENT).to_string())
-            .ok_or_else(|| anyhow!("Failed to convert path to &str: {:?}", path_buf))?;
-
-        let name = path_buf
+    pub fn new(path_ref: &Path) -> Result<File> {
+        let name = path_ref
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_else(|| path.clone());
+            .map_or_else(|| Self::path_string_from_path_ref(path_ref), Ok)?;
 
-        let file = if path_buf.is_dir() {
+        Self::new_with_name(path_ref, name)
+    }
+
+    pub fn new_with_name<T>(path_ref: &Path, name: T) -> Result<File>
+    where
+        T: Into<String>,
+    {
+        let path = Self::path_string_from_path_ref(path_ref)?;
+        let name = name.into();
+
+        let file = if path_ref.is_dir() {
             Self::Directory { name, path }
         } else {
             Self::File {
                 name,
                 path,
-                media_type: MediaType::new(path_buf),
+                media_type: MediaType::new(path_ref),
             }
         };
 
         Ok(file)
+    }
+
+    fn path_string_from_path_ref(path: &Path) -> Result<String> {
+        path.strip_prefix("./")?
+            .to_str()
+            .map(|p| utf8_percent_encode(p, FRAGMENT).to_string())
+            .ok_or_else(|| anyhow!("Failed to convert path to &str: {:?}", path))
     }
 
     pub fn name(&self) -> &str {

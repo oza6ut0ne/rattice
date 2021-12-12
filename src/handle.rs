@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anyhow::{anyhow, Result};
 use axum::{
     body::{Body, BoxBody},
@@ -58,5 +60,12 @@ fn list_files(uri: &str) -> Result<Vec<File>> {
         .collect::<Result<Vec<_>>>()?;
 
     files.sort();
+    if uri != "/" {
+        files.insert(
+            0,
+            File::new_with_name(Path::new(&format!(".{}", uri)).parent().unwrap(), "..")?,
+        )
+    }
+
     Ok(files)
 }
