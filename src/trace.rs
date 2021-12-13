@@ -6,7 +6,7 @@ use axum::{
     http::{Request, Response},
     Router,
 };
-use tower_http::trace::TraceLayer;
+use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
 use tracing::Span;
 
 pub fn add_trace_layer(app: Router, verbosity: u8) -> Router {
@@ -47,6 +47,17 @@ pub fn add_trace_layer(app: Router, verbosity: u8) -> Router {
                 let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
                 tracing::trace!(?id, "{:?}", response);
                 tracing::info!(status = response.status().as_u16(), ?latency, ?id)
-            }),
+            })
+            .on_failure(
+                |error: ServerErrorsFailureClass, latency: Duration, span: &Span| {
+                    let id: i128 = span.id().map(|i| i.into_u64().into()).unwrap_or(-1);
+                    tracing::error!(
+                        classification = tracing::field::display(&error),
+                        ?latency,
+                        ?id,
+                        "response failed"
+                    )
+                },
+            ),
     )
 }

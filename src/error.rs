@@ -3,6 +3,7 @@ use axum::{
     http::{Response, StatusCode},
     response::IntoResponse,
 };
+use tracing::Span;
 
 pub(crate) enum AppError {
     NotFound,
@@ -23,7 +24,11 @@ impl IntoResponse for AppError {
                 .body(body::boxed(Full::from("<h1>NOT FOUND</h1>")))
                 .unwrap(),
             Self::InternalServerError(e) => {
-                tracing::error!("{:?}", e);
+                let id: i128 = Span::current()
+                    .id()
+                    .map(|i| i.into_u64().into())
+                    .unwrap_or(-1);
+                tracing::error!(?id, "{:?}", e);
                 Response::builder()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
                     .body(body::boxed(Full::from("<h1>Internal Server Error</h1>")))
