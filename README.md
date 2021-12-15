@@ -6,7 +6,7 @@
 A media viewer for web browsers with lattice pattern written in Rust.  
 Images and videos are supported.
 
-![screencap](https://raw.githubusercontent.com/oza6ut0ne/rattice/master/pic/screencap.png)
+![screencap](https://raw.githubusercontent.com/oza6ut0ne/rattice/v0.0.1/pic/screencap.png)
 
 Above capture is Rattice running with [MIT-67 Indoor Scene Recognition Dataset](http://web.mit.edu/torralba/www/indoor.html) images for example.
 
