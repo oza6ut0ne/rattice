@@ -6,6 +6,7 @@ description = "A media viewer for web browsers with lattice pattern."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/oza6ut0ne/rattice"
 categories = ["multimedia::images", "multimedia::video", "visualization"]
+readme = "README.md"
 edition = "2021"
 
 [dependencies]
