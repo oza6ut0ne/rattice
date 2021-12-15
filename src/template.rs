@@ -1,10 +1,6 @@
 use anyhow::anyhow;
 use askama::Template;
-use axum::{
-    body::BoxBody,
-    http::Response,
-    response::{Html, IntoResponse},
-};
+use axum::response::{Html, IntoResponse, Response};
 
 use crate::{error::AppError, model::File};
 
@@ -32,7 +28,7 @@ impl<T> IntoResponse for HtmlTemplate<T>
 where
     T: Template,
 {
-    fn into_response(self) -> Response<BoxBody> {
+    fn into_response(self) -> Response {
         match self.0.render() {
             Ok(html) => Html(html).into_response(),
             Err(e) => AppError::from(anyhow!(e)).into_response(),

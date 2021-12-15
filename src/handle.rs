@@ -2,9 +2,9 @@ use std::path::Path;
 
 use anyhow::{anyhow, Result};
 use axum::{
-    body::{Body, BoxBody},
-    http::{Request, Response, StatusCode, Uri},
-    response::IntoResponse,
+    body::Body,
+    http::{Request, StatusCode, Uri},
+    response::{IntoResponse, Response},
     routing::get,
     Router,
 };
@@ -19,7 +19,7 @@ pub fn add_handler(app: Router) -> Router {
     app.nest("/", get(handle_request))
 }
 
-async fn handle_request(uri: Uri) -> Result<Response<BoxBody>, AppError> {
+async fn handle_request(uri: Uri) -> Result<Response, AppError> {
     let file_response = serve_file(&uri).await;
     if file_response.is_ok() {
         return file_response;
@@ -34,7 +34,7 @@ async fn handle_request(uri: Uri) -> Result<Response<BoxBody>, AppError> {
     Ok(HtmlTemplate(template).into_response())
 }
 
-async fn serve_file(uri: &Uri) -> Result<Response<BoxBody>, AppError> {
+async fn serve_file(uri: &Uri) -> Result<Response, AppError> {
     let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
     match ServeDir::new(".")
         .append_index_html_on_directories(false)

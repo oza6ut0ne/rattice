@@ -1,7 +1,7 @@
 use axum::{
-    body::{self, BoxBody, Full},
-    http::{Response, StatusCode},
-    response::IntoResponse,
+    body::{self, Full},
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
 use tracing::Span;
 
@@ -17,7 +17,7 @@ impl From<anyhow::Error> for AppError {
 }
 
 impl IntoResponse for AppError {
-    fn into_response(self) -> Response<BoxBody> {
+    fn into_response(self) -> Response {
         match self {
             Self::NotFound => Response::builder()
                 .status(StatusCode::NOT_FOUND)
