@@ -69,10 +69,13 @@ impl File {
     where
         T: Into<String>,
     {
-        let path = Self::path_string_from_path_ref(path_ref)?;
+        let mut path = Self::path_string_from_path_ref(path_ref)?;
         let name = name.into();
 
         let file = if path_ref.is_dir() {
+            if path != "/" {
+                path.push('/')
+            }
             Self::Directory { name, path }
         } else {
             Self::File {
