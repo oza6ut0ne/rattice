@@ -13,8 +13,8 @@ pub(crate) struct RatticeTemplate {
 }
 
 impl RatticeTemplate {
-    pub fn new(uri: String, files: Vec<File>) -> RatticeTemplate {
-        RatticeTemplate {
+    pub fn new(uri: String, files: Vec<File>) -> Self {
+        Self {
             uri,
             files,
             lazy: std::env::var_os("RATTICE_EAGER").is_none(),

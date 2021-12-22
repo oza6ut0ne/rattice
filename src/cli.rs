@@ -72,7 +72,7 @@ pub struct Opt {
 }
 
 impl Opt {
-    pub fn init() -> Result<Opt> {
+    pub fn init() -> Result<Self> {
         let mut opt = Self::from_args();
         if std::env::var_os("RUST_LOG").is_none() {
             std::env::set_var(

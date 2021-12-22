@@ -56,7 +56,7 @@ impl MediaType {
 }
 
 impl File {
-    pub fn new(path_ref: &Path) -> Result<File> {
+    pub fn new(path_ref: &Path) -> Result<Self> {
         let name = path_ref
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
@@ -65,7 +65,7 @@ impl File {
         Self::new_with_name(path_ref, name)
     }
 
-    pub fn new_with_name<T>(path_ref: &Path, name: T) -> Result<File>
+    pub fn new_with_name<T>(path_ref: &Path, name: T) -> Result<Self>
     where
         T: Into<String>,
     {

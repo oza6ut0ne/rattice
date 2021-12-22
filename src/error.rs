@@ -12,7 +12,7 @@ pub(crate) enum AppError {
 
 impl From<anyhow::Error> for AppError {
     fn from(error: anyhow::Error) -> Self {
-        AppError::InternalServerError(error)
+        Self::InternalServerError(error)
     }
 }
 
