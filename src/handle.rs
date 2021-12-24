@@ -26,10 +26,7 @@ async fn handle_request(uri: Uri) -> Result<Response, AppError> {
     }
     let encoded_uri = uri.path().to_string();
     let decoded_uri = percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
-    let files = match list_files(&decoded_uri) {
-        Ok(files) => files,
-        Err(_) => return Err(AppError::NotFound),
-    };
+    let files = list_files(&decoded_uri).map_err(|_| AppError::NotFound)?;
     let template = RatticeTemplate::new(decoded_uri.to_string(), files);
     Ok(HtmlTemplate(template).into_response())
 }
