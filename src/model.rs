@@ -5,12 +5,12 @@ use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 
 const FRAGMENT: &AsciiSet = &NON_ALPHANUMERIC.remove(b'/').remove(b'.');
 
-const IMAGE_EXTTENSIONS: &[&str] = &[
+const IMAGE_EXTENSIONS: &[&str] = &[
     "apng", "avif", "gif", "jpg", "jpeg", "jfif", "pjpeg", "pjp", "png", "svg", "webp", "bmp",
     "ico", "cur", "tif", "tiff",
 ];
 
-const VIDEO_EXTTENSIONS: &[&str] = &[
+const VIDEO_EXTENSIONS: &[&str] = &[
     "3gp", "mpg", "mpeg", "mp4", "m4v", "m4p", "ogv", "ogg", "mov", "webm", "aac", "flac", "mp3",
     "m4a", "oga", "wav",
 ];
@@ -42,9 +42,9 @@ impl MediaType {
             .map(|e| e.to_string_lossy().to_ascii_lowercase())
         {
             Some(ext) => {
-                if IMAGE_EXTTENSIONS.contains(&ext.as_str()) {
+                if IMAGE_EXTENSIONS.contains(&ext.as_str()) {
                     Self::Image
-                } else if VIDEO_EXTTENSIONS.contains(&ext.as_str()) {
+                } else if VIDEO_EXTENSIONS.contains(&ext.as_str()) {
                     Self::Video
                 } else {
                     Self::Other
