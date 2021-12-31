@@ -9,15 +9,24 @@ use axum::{
 use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
 use tracing::Span;
 
-pub fn add_trace_layer(app: Router, verbosity: u8) -> Router {
+pub fn add_trace_layer(app: Router, use_real_ip: bool, verbosity: u8) -> Router {
     app.layer(
         TraceLayer::new_for_http()
-            .make_span_with(|request: &Request<Body>| {
-                let addr = request
-                    .extensions()
-                    .get::<ConnectInfo<SocketAddr>>()
-                    .map(|ci| ci.0.to_string())
-                    .unwrap_or_else(|| "None".to_owned());
+            .make_span_with(move |request: &Request<Body>| {
+                let addr = if use_real_ip {
+                    request
+                        .headers()
+                        .get("X-Real-IP")
+                        .and_then(|i| i.to_str().ok())
+                        .unwrap_or("None")
+                        .to_owned()
+                } else {
+                    request
+                        .extensions()
+                        .get::<ConnectInfo<SocketAddr>>()
+                        .map(|ci| ci.0.to_string())
+                        .unwrap_or_else(|| "None".to_owned())
+                };
                 let encoded_uri = request.uri().path().to_string();
                 let decoded_uri =
                     percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();

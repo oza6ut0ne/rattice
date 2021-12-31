@@ -66,6 +66,10 @@ pub struct Opt {
     )]
     pub server_key: Option<PathBuf>,
 
+    /// Use X-Real-IP as client address in logs [env: RATTICE_USE_REAL_IP]
+    #[structopt(short = "x", long)]
+    pub use_real_ip: bool,
+
     /// Increase log level (-v, -vv, -vvv, -vvvv)
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
@@ -88,7 +92,7 @@ impl Opt {
         match opt.verbose.cmp(&3) {
             std::cmp::Ordering::Equal => tracing::trace!("{:?}", opt),
             std::cmp::Ordering::Greater => tracing::trace!("{:#?}", opt),
-            _ => {}
+            _ => { /* nop. */ }
         }
 
         if opt.username.is_some() && opt.username.as_ref().unwrap().contains(':') {
@@ -109,23 +113,28 @@ impl Opt {
         }
 
         if let Some(docroot) = opt.docroot {
-            opt.docroot = Some(docroot.canonicalize()?)
+            opt.docroot = Some(docroot.canonicalize()?);
         }
         if let Some(cert) = opt.server_cert {
-            opt.server_cert = Some(cert.canonicalize()?)
+            opt.server_cert = Some(cert.canonicalize()?);
         }
         if let Some(key) = opt.server_key {
-            opt.server_key = Some(key.canonicalize()?)
+            opt.server_key = Some(key.canonicalize()?);
         }
 
-        if opt.eager {
-            std::env::set_var("RATTICE_EAGER", "1")
+        if opt.eager || std::env::var_os("RATTICE_EAGER").is_some() {
+            opt.eager = true;
+            std::env::set_var("RATTICE_EAGER", "1");
+        }
+
+        if std::env::var_os("RATTICE_USE_REAL_IP").is_some() {
+            opt.use_real_ip = true;
         }
 
         match opt.verbose.cmp(&3) {
             std::cmp::Ordering::Equal => tracing::trace!("{:?}", opt),
             std::cmp::Ordering::Greater => tracing::trace!("{:#?}", opt),
-            _ => {}
+            _ => { /* nop. */ }
         }
         Ok(opt)
     }

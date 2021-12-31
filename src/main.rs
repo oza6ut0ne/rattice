@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
         app = auth::add_basic_authentication(app, &opt.username, &opt.password);
     }
 
-    let app = trace::add_trace_layer(app, opt.verbose);
+    let app = trace::add_trace_layer(app, opt.use_real_ip, opt.verbose);
     let addr = format!("{}:{}", opt.bind_address, opt.port)
         .to_socket_addrs()?
         .next()
