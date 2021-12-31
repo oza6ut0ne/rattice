@@ -35,10 +35,11 @@ USAGE:
     rattice [FLAGS] [OPTIONS] [PORT]
 
 FLAGS:
-    -e, --eager      Disable lazy image loading [env: RATTICE_EAGER]
-    -v, --verbose    Increase log level (-v, -vv, -vvv, -vvvv)
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -e, --eager          Disable lazy image loading [env: RATTICE_EAGER]
+    -x, --use-real-ip    Use X-Real-IP as client address in logs [env: RATTICE_USE_REAL_IP]
+    -v, --verbose        Increase log level (-v, -vv, -vvv, -vvvv)
+    -h, --help           Prints help information
+    -V, --version        Prints version information
 
 OPTIONS:
     -b, --bind-address <address>        Bind address [env: RATTICE_BIND_ADDR=]  [default: ::]
