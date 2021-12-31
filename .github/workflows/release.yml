@@ -18,8 +18,6 @@ jobs:
           - { os: ubuntu-latest  , target: arm-unknown-linux-musleabi     , use-cross: true }
           - { os: macos-latest   , target: x86_64-apple-darwin            }
           - { os: windows-latest , target: x86_64-pc-windows-msvc         }
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -35,6 +33,7 @@ jobs:
           command: rustc
           args: --release --bin rattice --target ${{ matrix.job.target }} -- -C opt-level=z
       - name: Strip
+        if: startsWith( matrix.job.os, 'windows') != true
         shell: bash
         run: |
           STRIP=strip
@@ -44,15 +43,16 @@ jobs:
             aarch64-unknown-linux-musl) sudo apt-get -y update ; sudo apt-get -y install gcc-aarch64-linux-gnu; STRIP=aarch64-linux-gnu-strip ;;
           esac
           $STRIP target/${{ matrix.job.target }}/release/rattice
+      - name: Rename artifacts
         if: startsWith( matrix.job.os, 'windows') != true
-      - name: Archive artifacts
         shell: bash
         run: |
-          tar zcvf target/${{ matrix.job.target }}/release/rattice-${{ matrix.job.target }}.tar.gz -C target/${{ matrix.job.target }}/release/ rattice
-        if: startsWith( matrix.job.os, 'windows') != true
+          mv target/${{ matrix.job.target }}/release/rattice{,.${{ matrix.job.target }}}
       - name: Release
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            target/${{ matrix.job.target }}/release/rattice-*.tar.gz
+            target/${{ matrix.job.target }}/release/rattice.${{ matrix.job.target }}
             target/${{ matrix.job.target }}/release/rattice.exe
