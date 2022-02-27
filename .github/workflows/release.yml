@@ -30,19 +30,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           use-cross: ${{ matrix.job.use-cross }}
-          command: rustc
-          args: --release --bin rattice --target ${{ matrix.job.target }} -- -C opt-level=z
-      - name: Strip
-        if: startsWith( matrix.job.os, 'windows') != true
-        shell: bash
-        run: |
-          STRIP=strip
-          case ${{ matrix.job.target }} in
-            armv7-unknown-linux-musleabihf) sudo apt-get -y update; sudo apt-get -y install gcc-arm-linux-gnueabihf; STRIP=arm-linux-gnueabihf-strip;;
-            arm-unknown-linux-musleabi) sudo apt-get -y update; sudo apt-get -y install gcc-arm-linux-gnueabi; STRIP=arm-linux-gnueabi-strip;;
-            aarch64-unknown-linux-musl) sudo apt-get -y update ; sudo apt-get -y install gcc-aarch64-linux-gnu; STRIP=aarch64-linux-gnu-strip ;;
-          esac
-          $STRIP target/${{ matrix.job.target }}/release/rattice
+          command: build
+          args: --release --target ${{ matrix.job.target }}
       - name: Rename artifacts
         if: startsWith( matrix.job.os, 'windows') != true
         shell: bash
