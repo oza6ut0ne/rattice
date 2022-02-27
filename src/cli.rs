@@ -24,7 +24,7 @@ pub struct Opt {
     #[clap(
         short,
         long,
-        name = "address",
+        name = "ADDRESS",
         default_value = "::",
         env = "RATTICE_BIND_ADDR"
     )]
@@ -43,10 +43,10 @@ pub struct Opt {
     pub password: Option<String>,
 
     /// Generate random username and/or password with given length
-    #[clap(short, long, name = "length")]
+    #[clap(short, long, name = "LENGTH")]
     random_credencial: Option<u8>,
 
-    /// Server certificate file for HTTPS
+    /// Server certificate for HTTPS
     #[clap(
         short,
         long,
@@ -56,7 +56,7 @@ pub struct Opt {
     )]
     pub server_cert: Option<PathBuf>,
 
-    /// Server key file for HTTPS
+    /// Server key for HTTPS
     #[clap(
         short = 'k',
         long,
