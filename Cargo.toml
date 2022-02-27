@@ -15,10 +15,10 @@ askama = "0.10.5"
 axum = "0.4.2"
 axum-server = { version = "0.3.3", features = ["tls-rustls"] }
 base64 = "0.13.0"
+clap = { version = "3.1.2", features = ["env", "derive"] }
 hyper = { version = "0.14.15", features = ["full"] }
 percent-encoding = "2.1.0"
 rand = "0.8.4"
-structopt = "0.3.25"
 tokio = { version = "1.14.0", features = ["full"] }
 tower = "0.4.11"
 tower-http = { version = "0.1.2", features = ["auth", "fs", "trace"] }

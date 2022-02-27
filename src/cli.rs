@@ -1,23 +1,27 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
+use clap::{AppSettings::DeriveDisplayOrder, Parser};
 use rand::Rng;
-use structopt::{clap::AppSettings::DeriveDisplayOrder, StructOpt};
 
 const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                             abcdefghijklmnopqrstuvwxyz\
                             0123456789\
                             !\"#$%&'()*+,-./;<=>?@[\\]^_`{|}~";
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "Rattice", setting(DeriveDisplayOrder))]
+#[derive(Parser, Debug)]
+#[clap(name = "Rattice", version, setting(DeriveDisplayOrder))]
+#[clap(
+	mut_arg("version", |arg| arg.help_heading("FLAGS")),
+	mut_arg("help", |arg| arg.help_heading("FLAGS"))
+)]
 pub struct Opt {
     /// Listen port
-    #[structopt(name = "PORT", default_value = "3000", env = "RATTICE_PORT")]
+    #[clap(name = "PORT", default_value = "3000", env = "RATTICE_PORT")]
     pub port: u16,
 
     /// Bind address
-    #[structopt(
+    #[clap(
         short,
         long,
         name = "address",
@@ -26,28 +30,24 @@ pub struct Opt {
     )]
     pub bind_address: String,
 
-    /// Disable lazy image loading [env: RATTICE_EAGER]
-    #[structopt(short, long)]
-    eager: bool,
-
     /// Specify document root directory
-    #[structopt(short, long, parse(from_os_str), env = "RATTICE_DOCROOT")]
+    #[clap(short, long, parse(from_os_str), env = "RATTICE_DOCROOT")]
     pub docroot: Option<PathBuf>,
 
     /// Username for Basic Authentication
-    #[structopt(short, long, env = "RATTICE_USER", hide_env_values = true)]
+    #[clap(short, long, env = "RATTICE_USER", hide_env_values = true)]
     pub username: Option<String>,
 
     /// Password for Basic Authentication
-    #[structopt(short, long, env = "RATTICE_PASS", hide_env_values = true)]
+    #[clap(short, long, env = "RATTICE_PASS", hide_env_values = true)]
     pub password: Option<String>,
 
     /// Generate random username and/or password with given length
-    #[structopt(short, long, name = "length")]
+    #[clap(short, long, name = "length")]
     random_credencial: Option<u8>,
 
     /// Server certificate file for HTTPS
-    #[structopt(
+    #[clap(
         short,
         long,
         parse(from_os_str),
@@ -57,8 +57,8 @@ pub struct Opt {
     pub server_cert: Option<PathBuf>,
 
     /// Server key file for HTTPS
-    #[structopt(
-        short = "k",
+    #[clap(
+        short = 'k',
         long,
         parse(from_os_str),
         requires = "server-cert",
@@ -66,18 +66,25 @@ pub struct Opt {
     )]
     pub server_key: Option<PathBuf>,
 
-    /// Use X-Real-IP as client address in logs [env: RATTICE_USE_REAL_IP]
-    #[structopt(short = "x", long)]
+    /// Disable lazy image loading
+    #[clap(help_heading = "FLAGS")]
+    #[clap(short, long, env = "RATTICE_EAGER")]
+    eager: bool,
+
+    /// Use X-Real-IP as client address in logs
+    #[clap(help_heading = "FLAGS")]
+    #[clap(short = 'x', long, env = "RATTICE_USE_REAL_IP")]
     pub use_real_ip: bool,
 
     /// Increase log level (-v, -vv, -vvv, -vvvv)
-    #[structopt(short, long, parse(from_occurrences))]
+    #[clap(help_heading = "FLAGS")]
+    #[clap(short, long, parse(from_occurrences))]
     pub verbose: u8,
 }
 
 impl Opt {
     pub fn init() -> Result<Self> {
-        let mut opt = Self::from_args();
+        let mut opt = Self::parse();
         if std::env::var_os("RUST_LOG").is_none() {
             std::env::set_var(
                 "RUST_LOG",
@@ -122,13 +129,10 @@ impl Opt {
             opt.server_key = Some(key.canonicalize()?);
         }
 
-        if opt.eager || std::env::var_os("RATTICE_EAGER").is_some() {
-            opt.eager = true;
+        if opt.eager {
             std::env::set_var("RATTICE_EAGER", "1");
-        }
-
-        if std::env::var_os("RATTICE_USE_REAL_IP").is_some() {
-            opt.use_real_ip = true;
+        } else {
+            std::env::remove_var("RATTICE_EAGER");
         }
 
         match opt.verbose.cmp(&3) {
