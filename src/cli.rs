@@ -4,16 +4,16 @@ use anyhow::{bail, Result};
 use clap::{AppSettings::DeriveDisplayOrder, Parser};
 use rand::Rng;
 
-const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-                            abcdefghijklmnopqrstuvwxyz\
-                            0123456789\
-                            !\"#$%&'()*+,-./;<=>?@[\\]^_`{|}~";
+const RANDOM_CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                                  abcdefghijklmnopqrstuvwxyz\
+                                  0123456789\
+                                  !\"#$%&'()*+,-./;<=>?@[\\]^_`{|}~";
 
 #[derive(Parser, Debug)]
 #[clap(name = "Rattice", version, setting(DeriveDisplayOrder))]
 #[clap(
-	mut_arg("version", |arg| arg.help_heading("FLAGS")),
-	mut_arg("help", |arg| arg.help_heading("FLAGS"))
+    mut_arg("version", |arg| arg.help_heading("FLAGS")),
+    mut_arg("help", |arg| arg.help_heading("FLAGS"))
 )]
 pub struct Opt {
     /// Listen port
@@ -102,7 +102,7 @@ impl Opt {
             _ => { /* nop. */ }
         }
 
-        if opt.username.is_some() && opt.username.as_ref().unwrap().contains(':') {
+        if matches!(&opt.username, Some(name) if name.contains(':')) {
             bail!("Colon ':' is not allowed for username");
         }
 
@@ -148,8 +148,8 @@ fn get_random_string(length: u8) -> String {
     let mut rng = rand::thread_rng();
     (0..length)
         .map(|_| {
-            let idx = rng.gen_range(0..CHARSET.len());
-            CHARSET[idx] as char
+            let idx = rng.gen_range(0..RANDOM_CHARSET.len());
+            RANDOM_CHARSET[idx] as char
         })
         .collect()
 }

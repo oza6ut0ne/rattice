@@ -27,23 +27,22 @@ async fn main() -> Result<()> {
         .next()
         .ok_or_else(|| anyhow!("Address is invalid {}:{}", opt.bind_address, opt.port))?;
 
-    if opt.server_cert.is_some() && opt.server_key.is_some() {
-        tracing::info!("HTTPS enabled");
-        let config = RustlsConfig::from_pem_file(
-            opt.server_cert.as_ref().unwrap(),
-            opt.server_key.as_ref().unwrap(),
-        )
-        .await?;
+    match (&opt.server_cert, &opt.server_key) {
+        (Some(cert), Some(key)) => {
+            tracing::info!("HTTPS enabled");
+            let config = RustlsConfig::from_pem_file(cert, key).await?;
 
-        tracing::info!("listening on {}", addr);
-        axum_server::bind_rustls(addr, config)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())
-            .await?;
-    } else {
-        tracing::info!("listening on {}", addr);
-        axum::Server::bind(&addr)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())
-            .await?;
+            tracing::info!("listening on {}", addr);
+            axum_server::bind_rustls(addr, config)
+                .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())
+                .await?;
+        }
+        _ => {
+            tracing::info!("listening on {}", addr);
+            axum::Server::bind(&addr)
+                .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())
+                .await?;
+        }
     }
 
     Ok(())
