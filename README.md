@@ -3,12 +3,12 @@
 [![crates.io](https://img.shields.io/crates/v/rattice.svg)](https://crates.io/crates/rattice/)
 [![crates.io](https://img.shields.io/crates/d/rattice)](https://crates.io/crates/rattice/)
 
-A media viewer for web browsers with lattice pattern written in Rust.  
+A media viewer for web browsers written in Rust.  
 Images and videos are supported.
 
 ![screencap](https://raw.githubusercontent.com/oza6ut0ne/rattice/v0.0.4/pic/screencap.png)
 
-Above capture is Rattice running with [MIT-67 Indoor Scene Recognition Dataset](http://web.mit.edu/torralba/www/indoor.html) images for example.
+*Screenshot of Rattice running with [MIT-67 Indoor Scene Recognition Dataset](http://web.mit.edu/torralba/www/indoor.html) images.*
 
 ## Installation
 
