@@ -73,7 +73,7 @@ impl File {
         let name = name.into();
 
         let file = if path_ref.is_dir() {
-            if path != "/" {
+            if !path.is_empty() {
                 path.push('/')
             }
             Self::Directory { name, path }
