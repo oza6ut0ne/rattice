@@ -6,7 +6,7 @@
 A media viewer for web browsers written in Rust.  
 Images and videos are supported.
 
-![screencap](https://raw.githubusercontent.com/oza6ut0ne/rattice/v0.0.4/pic/screencap.png)
+![screencap](https://raw.githubusercontent.com/oza6ut0ne/rattice/v0.0.5/pic/screencap.png)
 
 *Screenshot of Rattice running with [MIT-67 Indoor Scene Recognition Dataset](http://web.mit.edu/torralba/www/indoor.html) images.*
 
@@ -29,7 +29,7 @@ or download prebuilt binary from [Releases](https://github.com/oza6ut0ne/rattice
 
 ```shellsession
 $ rattice --help
-Rattice 0.0.4
+Rattice 0.0.5
 
 USAGE:
     rattice [OPTIONS] [PORT]
@@ -38,13 +38,29 @@ ARGS:
     <PORT>    Listen port [env: RATTICE_PORT=] [default: 3000]
 
 OPTIONS:
-    -b, --bind-address <ADDRESS>        Bind address [env: RATTICE_BIND_ADDR=] [default: ::]
-    -d, --docroot <DOCROOT>             Specify document root directory [env: RATTICE_DOCROOT=]
-    -u, --username <USERNAME>           Username for Basic Authentication [env: RATTICE_USER]
-    -p, --password <PASSWORD>           Password for Basic Authentication [env: RATTICE_PASS]
-    -r, --random-credencial <LENGTH>    Generate random username and/or password with given length
-    -s, --server-cert <SERVER_CERT>     Server certificate for HTTPS [env: RATTICE_SERVER_CERT=]
-    -k, --server-key <SERVER_KEY>       Server key for HTTPS [env: RATTICE_SERVER_KEY=]
+    -b, --bind-address <ADDRESS>
+            Bind address [env: RATTICE_BIND_ADDR=] [default: ::]
+
+    -d, --docroot <DOCROOT>
+            Specify document root directory [env: RATTICE_DOCROOT=]
+
+    -u, --username <USERNAME>
+            Username for Basic Authentication [env: RATTICE_USER]
+
+    -p, --password <PASSWORD>
+            Password for Basic Authentication [env: RATTICE_PASS]
+
+    -r, --random-credencial <LENGTH>
+            Generate random username and/or password with given length
+
+    -s, --server-cert <SERVER_CERT>
+            Server certificate for HTTPS [env: RATTICE_SERVER_CERT=]
+
+    -k, --server-key <SERVER_KEY>
+            Server key for HTTPS [env: RATTICE_SERVER_KEY=]
+
+    -t, --title-prefix <TITLE_PREFIX>
+            Prefix for HTML title tag [env: RATTICE_TITLE_PREFIX=] [default: Rattice]
 
 FLAGS:
     -e, --eager          Disable lazy image loading [env: RATTICE_EAGER=]
