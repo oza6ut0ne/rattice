@@ -18,7 +18,7 @@ codegen-units = 1
 [dependencies]
 anyhow = "1.0.47"
 askama = "0.10.5"
-axum = "0.4.4"
+axum = "0.5.0"
 axum-server = { version = "0.3.3", features = ["tls-rustls"] }
 base64 = "0.13.0"
 clap = { version = "3.1.2", features = ["env", "derive"] }

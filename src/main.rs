@@ -34,13 +34,13 @@ async fn main() -> Result<()> {
 
             tracing::info!("listening on {}", addr);
             axum_server::bind_rustls(addr, config)
-                .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())
+                .serve(app.into_make_service_with_connect_info::<SocketAddr>())
                 .await?;
         }
         _ => {
             tracing::info!("listening on {}", addr);
             axum::Server::bind(&addr)
-                .serve(app.into_make_service_with_connect_info::<SocketAddr, _>())
+                .serve(app.into_make_service_with_connect_info::<SocketAddr>())
                 .await?;
         }
     }
