@@ -66,10 +66,14 @@ pub struct Opt {
     )]
     pub server_key: Option<PathBuf>,
 
+    /// Prefix for HTML title tag
+    #[clap(short, long, default_value = "Rattice", env = "RATTICE_TITLE_PREFIX")]
+    pub title_prefix: String,
+
     /// Disable lazy image loading
     #[clap(help_heading = "FLAGS")]
     #[clap(short, long, env = "RATTICE_EAGER")]
-    eager: bool,
+    pub eager: bool,
 
     /// Use X-Real-IP as client address in logs
     #[clap(help_heading = "FLAGS")]
@@ -129,10 +133,8 @@ impl Opt {
             opt.server_key = Some(key.canonicalize()?);
         }
 
-        if opt.eager {
-            std::env::set_var("RATTICE_EAGER", "1");
-        } else {
-            std::env::remove_var("RATTICE_EAGER");
+        if !opt.title_prefix.is_empty() && !opt.title_prefix.ends_with(' ') {
+            opt.title_prefix.push(' ');
         }
 
         match opt.verbose.cmp(&3) {

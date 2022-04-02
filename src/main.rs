@@ -1,9 +1,12 @@
-use std::net::{SocketAddr, ToSocketAddrs};
+use std::{
+    net::{SocketAddr, ToSocketAddrs},
+    sync::Arc,
+};
 
 use anyhow::{anyhow, Result};
-use axum::Router;
+use axum::{Extension, Router};
 use axum_server::tls_rustls::RustlsConfig;
-use rattice::{auth, handle, trace};
+use rattice::{auth, config::Config, handle, trace};
 
 mod cli;
 
@@ -20,6 +23,11 @@ async fn main() -> Result<()> {
         tracing::info!("Basic Authentication enabled");
         app = auth::add_basic_authentication(app, &opt.username, &opt.password);
     }
+
+    app = app.layer(Extension(Arc::new(Config::new(
+        !opt.eager,
+        opt.title_prefix.clone(),
+    ))));
 
     let app = trace::add_trace_layer(app, opt.use_real_ip, opt.verbose);
     let addr = format!("{}:{}", opt.bind_address, opt.port)

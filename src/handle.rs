@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
 use anyhow::{anyhow, Result};
 use axum::{
@@ -6,28 +6,34 @@ use axum::{
     http::{Request, StatusCode, Uri},
     response::{IntoResponse, Response},
     routing::get,
-    Router,
+    Extension, Router,
 };
 use tower::ServiceExt;
 use tower_http::services::ServeDir;
 
-use crate::error::AppError;
-use crate::model::File;
-use crate::template::{HtmlTemplate, RatticeTemplate};
+use crate::{
+    config::Config,
+    error::AppError,
+    model::File,
+    template::{HtmlTemplate, RatticeTemplate},
+};
 
 pub fn add_handler(app: Router) -> Router {
     app.nest("/", get(handle_request))
 }
 
-async fn handle_request(uri: Uri) -> Result<Response, AppError> {
+async fn handle_request(
+    uri: Uri,
+    Extension(config): Extension<Arc<Config>>,
+) -> Result<Response, AppError> {
     let file_response = serve_file(&uri).await;
     if file_response.is_ok() {
         return file_response;
     }
-    let encoded_uri = uri.path().to_string();
-    let decoded_uri = percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
+
+    let decoded_uri = percent_encoding::percent_decode_str(uri.path()).decode_utf8_lossy();
     let files = list_files(&decoded_uri).map_err(|_| AppError::NotFound)?;
-    let template = RatticeTemplate::new(decoded_uri.to_string(), files);
+    let template = RatticeTemplate::new(&decoded_uri, files, config.lazy(), config.title_prefix());
     Ok(HtmlTemplate(template).into_response())
 }
 
