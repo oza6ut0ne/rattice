@@ -9,6 +9,11 @@ const RANDOM_CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                                   0123456789\
                                   !\"#$%&'()*+,-./;<=>?@[\\]^_`{|}~";
 
+#[cfg(unix)]
+const DEFAULT_BIND_ADDRESS: &str = "::";
+#[cfg(windows)]
+const DEFAULT_BIND_ADDRESS: &str = "0.0.0.0";
+
 #[derive(Parser, Debug)]
 #[clap(name = "Rattice", version, setting(DeriveDisplayOrder))]
 #[clap(
@@ -25,7 +30,7 @@ pub struct Opt {
         short,
         long,
         name = "ADDRESS",
-        default_value = "::",
+        default_value = DEFAULT_BIND_ADDRESS,
         env = "RATTICE_BIND_ADDR"
     )]
     pub bind_address: String,
