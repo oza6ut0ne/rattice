@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{cmp::Ordering, fs::Metadata, path::Path, time::SystemTime};
 
 use anyhow::{anyhow, Result};
 use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
@@ -15,23 +15,47 @@ const VIDEO_EXTENSIONS: &[&str] = &[
     "m4a", "oga", "wav",
 ];
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone)]
+pub enum SortOrder {
+    Name,
+    NameReversed,
+    CreatedAt,
+    CreatedAtReversed,
+    ModifiedAt,
+    ModifiedAtReversed,
+}
+
+impl SortOrder {
+    pub fn reversed(self) -> Self {
+        use SortOrder::*;
+        match self {
+            Name => NameReversed,
+            NameReversed => Name,
+            CreatedAt => CreatedAtReversed,
+            CreatedAtReversed => CreatedAt,
+            ModifiedAt => ModifiedAtReversed,
+            ModifiedAtReversed => ModifiedAt,
+        }
+    }
+}
+
 pub(crate) enum MediaType {
     Image,
     Video,
     Other,
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum File {
     Directory {
         name: String,
         path: String,
+        metadata: Option<Metadata>,
     },
     File {
         name: String,
         path: String,
         media_type: MediaType,
+        metadata: Option<Metadata>,
     },
 }
 
@@ -56,16 +80,16 @@ impl MediaType {
 }
 
 impl File {
-    pub fn new(path_ref: &Path) -> Result<Self> {
+    pub fn new(path_ref: &Path, metadata: Option<Metadata>) -> Result<Self> {
         let name = path_ref
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
             .map_or_else(|| Self::path_string_from_path_ref(path_ref), Ok)?;
 
-        Self::new_with_name(path_ref, name)
+        Self::new_with_name(path_ref, name, metadata)
     }
 
-    pub fn new_with_name<T>(path_ref: &Path, name: T) -> Result<Self>
+    pub fn new_with_name<T>(path_ref: &Path, name: T, metadata: Option<Metadata>) -> Result<Self>
     where
         T: Into<String>,
     {
@@ -76,12 +100,17 @@ impl File {
             if !path.is_empty() {
                 path.push('/')
             }
-            Self::Directory { name, path }
+            Self::Directory {
+                name,
+                path,
+                metadata,
+            }
         } else {
             Self::File {
                 name,
                 path,
                 media_type: MediaType::new(path_ref),
+                metadata,
             }
         };
 
@@ -95,15 +124,49 @@ impl File {
             .ok_or_else(|| anyhow!("Failed to convert path to &str: {:?}", path))
     }
 
+    pub fn cmp_by(&self, other: &Self, order: &SortOrder) -> Ordering {
+        match (self.is_dir(), other.is_dir()) {
+            (true, false) => return Ordering::Less,
+            (false, true) => return Ordering::Greater,
+            _ => { /* nop. */ }
+        };
+
+        use SortOrder::*;
+        return match order {
+            Name => self.name().cmp(other.name()),
+            NameReversed => other.name().cmp(self.name()),
+            CreatedAt => self.cmp_by_created_at(other),
+            CreatedAtReversed => other.cmp_by_created_at(self),
+            ModifiedAt => self.cmp_by_modified_at(other),
+            ModifiedAtReversed => other.cmp_by_modified_at(self),
+        };
+    }
+
     pub fn name(&self) -> &str {
         match self {
-            Self::Directory { name, path: _ } => name,
+            Self::Directory {
+                name,
+                path: _,
+                metadata: _,
+            } => name,
             Self::File {
                 name,
                 path: _,
                 media_type: _,
+                metadata: _,
             } => name,
         }
+    }
+
+    fn is_dir(&self) -> bool {
+        matches!(
+            self,
+            Self::Directory {
+                name: _,
+                path: _,
+                metadata: _,
+            }
+        )
     }
 
     pub fn is_image(&self) -> bool {
@@ -113,6 +176,7 @@ impl File {
                 name: _,
                 path: _,
                 media_type: MediaType::Image,
+                metadata: _,
             }
         )
     }
@@ -124,7 +188,46 @@ impl File {
                 name: _,
                 path: _,
                 media_type: MediaType::Video,
+                metadata: _,
             }
         )
+    }
+
+    fn metadata(&self) -> &Option<Metadata> {
+        match self {
+            Self::Directory {
+                name: _,
+                path: _,
+                metadata,
+            } => metadata,
+            Self::File {
+                name: _,
+                path: _,
+                media_type: _,
+                metadata,
+            } => metadata,
+        }
+    }
+
+    fn created_at(&self) -> Option<SystemTime> {
+        self.metadata().clone().and_then(|m| m.created().ok())
+    }
+
+    fn modified_at(&self) -> Option<SystemTime> {
+        self.metadata().clone().and_then(|m| m.modified().ok())
+    }
+
+    fn cmp_by_created_at(&self, other: &Self) -> Ordering {
+        match (self.created_at(), other.created_at()) {
+            (Some(s), Some(o)) => s.cmp(&o),
+            _ => Ordering::Equal,
+        }
+    }
+
+    fn cmp_by_modified_at(&self, other: &Self) -> Ordering {
+        match (self.modified_at(), other.modified_at()) {
+            (Some(s), Some(o)) => s.cmp(&o),
+            _ => Ordering::Equal,
+        }
     }
 }

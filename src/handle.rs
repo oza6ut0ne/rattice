@@ -32,7 +32,7 @@ async fn handle_request(
     }
 
     let decoded_uri = percent_encoding::percent_decode_str(uri.path()).decode_utf8_lossy();
-    let files = list_files(&decoded_uri).map_err(|_| AppError::NotFound)?;
+    let files = list_files(&decoded_uri, &config).map_err(|_| AppError::NotFound)?;
     let template = RatticeTemplate::new(&decoded_uri, files, config.lazy(), config.title_prefix());
     Ok(HtmlTemplate(template).into_response())
 }
@@ -52,21 +52,23 @@ async fn serve_file(uri: &Uri) -> Result<Response, AppError> {
     }
 }
 
-fn list_files(uri: &str) -> Result<Vec<File>> {
-    let entries = std::fs::read_dir(format!(".{}", uri))?
-        .map(|res| res.map(|e| e.path()))
-        .collect::<Result<Vec<_>, _>>()?;
+fn list_files(uri: &str, config: &Arc<Config>) -> Result<Vec<File>> {
+    let entries = std::fs::read_dir(format!(".{}", uri))?.collect::<Result<Vec<_>, _>>()?;
 
     let mut files = entries
         .iter()
-        .map(|e| File::new(e))
+        .map(|e| File::new(&e.path(), e.metadata().ok()))
         .collect::<Result<Vec<_>>>()?;
 
-    files.sort();
+    files.sort_unstable_by(|a, b| a.cmp_by(b, config.sort_order()));
     if uri != "/" {
         files.insert(
             0,
-            File::new_with_name(Path::new(&format!(".{}", uri)).parent().unwrap(), "..")?,
+            File::new_with_name(
+                Path::new(&format!(".{}", uri)).parent().unwrap(),
+                "..",
+                None,
+            )?,
         )
     }
 

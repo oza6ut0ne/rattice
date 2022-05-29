@@ -1,8 +1,10 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
-use clap::{AppSettings::DeriveDisplayOrder, Parser};
+use clap::{AppSettings::DeriveDisplayOrder, ArgEnum, Parser};
 use rand::Rng;
+
+use rattice::model::SortOrder;
 
 const RANDOM_CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                                   abcdefghijklmnopqrstuvwxyz\
@@ -13,6 +15,14 @@ const RANDOM_CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
 const DEFAULT_BIND_ADDRESS: &str = "::";
 #[cfg(windows)]
 const DEFAULT_BIND_ADDRESS: &str = "0.0.0.0";
+
+#[derive(ArgEnum, Clone, Debug)]
+enum SortBy {
+    Name,
+    #[cfg(not(target_os = "linux"))]
+    Created,
+    Modified,
+}
 
 #[derive(Parser, Debug)]
 #[clap(name = "Rattice", version, setting(DeriveDisplayOrder))]
@@ -39,6 +49,10 @@ pub struct Opt {
     #[clap(short, long, parse(from_os_str), env = "RATTICE_DOCROOT")]
     pub docroot: Option<PathBuf>,
 
+    /// Sort order
+    #[clap(arg_enum, short, long, default_value = "name", env = "RATTICE_SORT_BY")]
+    sort_by: SortBy,
+
     /// Username for Basic Authentication
     #[clap(short, long, env = "RATTICE_USER", hide_env_values = true)]
     pub username: Option<String>,
@@ -48,12 +62,12 @@ pub struct Opt {
     pub password: Option<String>,
 
     /// Generate random username and/or password with given length
-    #[clap(short, long, name = "LENGTH")]
+    #[clap(short = 'R', long, name = "LENGTH", env = "RATTICE_RANDOM_CREDENCIAL")]
     random_credencial: Option<u8>,
 
     /// Server certificate for HTTPS
     #[clap(
-        short,
+        short = 'c',
         long,
         parse(from_os_str),
         requires = "server-key",
@@ -74,6 +88,11 @@ pub struct Opt {
     /// Prefix for HTML title tag
     #[clap(short, long, default_value = "Rattice", env = "RATTICE_TITLE_PREFIX")]
     pub title_prefix: String,
+
+    /// Reverse sort order
+    #[clap(help_heading = "FLAGS")]
+    #[clap(short, long, env = "RATTICE_REVERSE")]
+    reverse: bool,
 
     /// Disable lazy image loading
     #[clap(help_heading = "FLAGS")]
@@ -148,6 +167,21 @@ impl Opt {
             _ => { /* nop. */ }
         }
         Ok(opt)
+    }
+
+    pub fn sort_order(&self) -> SortOrder {
+        let order = match self.sort_by {
+            SortBy::Name => SortOrder::Name,
+            #[cfg(not(target_os = "linux"))]
+            SortBy::Created => SortOrder::CreatedAt,
+            SortBy::Modified => SortOrder::ModifiedAt,
+        };
+
+        if self.reverse {
+            order.reversed()
+        } else {
+            order
+        }
     }
 }
 
