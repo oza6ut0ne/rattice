@@ -27,7 +27,7 @@ pub fn add_trace_layer(app: Router, use_real_ip: bool, verbosity: u8) -> Router 
                         .map(|ci| ci.0.to_string())
                         .unwrap_or_else(|| "None".to_owned())
                 };
-                let encoded_uri = request.uri().path().to_string();
+                let encoded_uri = request.uri().to_string();
                 let decoded_uri =
                     percent_encoding::percent_decode_str(&encoded_uri).decode_utf8_lossy();
                 tracing::info_span!("", "{} {} {}", addr, request.method(), decoded_uri)

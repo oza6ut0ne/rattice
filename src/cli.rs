@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::{AppSettings::DeriveDisplayOrder, ArgEnum, Parser};
 use rand::Rng;
 
@@ -92,7 +92,7 @@ pub struct Opt {
     /// Reverse sort order
     #[clap(help_heading = "FLAGS")]
     #[clap(short, long, env = "RATTICE_REVERSE")]
-    reverse: bool,
+    pub reverse: bool,
 
     /// Disable lazy image loading
     #[clap(help_heading = "FLAGS")]
@@ -169,19 +169,13 @@ impl Opt {
         Ok(opt)
     }
 
-    pub fn sort_order(&self) -> SortOrder {
-        let order = match self.sort_by {
-            SortBy::Name => SortOrder::Name,
-            #[cfg(not(target_os = "linux"))]
-            SortBy::Created => SortOrder::CreatedAt,
-            SortBy::Modified => SortOrder::ModifiedAt,
-        };
-
-        if self.reverse {
-            order.reversed()
-        } else {
-            order
-        }
+    pub fn sort_order(&self) -> Result<SortOrder> {
+        self.sort_by
+            .to_possible_value()
+            .ok_or(anyhow!("Invalid sort order"))?
+            .get_name()
+            .parse()
+            .map_err(|e: String| anyhow!(e))
     }
 }
 

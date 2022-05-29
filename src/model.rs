@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fs::Metadata, path::Path, time::SystemTime};
+use std::{cmp::Ordering, fs::Metadata, path::Path, str::FromStr, time::SystemTime};
 
 use anyhow::{anyhow, Result};
 use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
@@ -18,23 +18,19 @@ const VIDEO_EXTENSIONS: &[&str] = &[
 #[derive(Clone)]
 pub enum SortOrder {
     Name,
-    NameReversed,
     CreatedAt,
-    CreatedAtReversed,
     ModifiedAt,
-    ModifiedAtReversed,
 }
 
-impl SortOrder {
-    pub fn reversed(self) -> Self {
-        use SortOrder::*;
-        match self {
-            Name => NameReversed,
-            NameReversed => Name,
-            CreatedAt => CreatedAtReversed,
-            CreatedAtReversed => CreatedAt,
-            ModifiedAt => ModifiedAtReversed,
-            ModifiedAtReversed => ModifiedAt,
+impl FromStr for SortOrder {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "name" => Ok(Self::Name),
+            "created" => Ok(Self::CreatedAt),
+            "modified" => Ok(Self::ModifiedAt),
+            _ => Err(format!("Invalid variant name: {}", s)),
         }
     }
 }
@@ -124,22 +120,24 @@ impl File {
             .ok_or_else(|| anyhow!("Failed to convert path to &str: {:?}", path))
     }
 
-    pub fn cmp_by(&self, other: &Self, order: &SortOrder) -> Ordering {
+    pub fn cmp_by(&self, other: &Self, order: &SortOrder, reverse: bool) -> Ordering {
         match (self.is_dir(), other.is_dir()) {
             (true, false) => return Ordering::Less,
             (false, true) => return Ordering::Greater,
             _ => { /* nop. */ }
         };
 
-        use SortOrder::*;
-        return match order {
-            Name => self.name().cmp(other.name()),
-            NameReversed => other.name().cmp(self.name()),
-            CreatedAt => self.cmp_by_created_at(other),
-            CreatedAtReversed => other.cmp_by_created_at(self),
-            ModifiedAt => self.cmp_by_modified_at(other),
-            ModifiedAtReversed => other.cmp_by_modified_at(self),
+        let ordering = match order {
+            SortOrder::Name => self.name().cmp(other.name()),
+            SortOrder::CreatedAt => self.cmp_by_created_at(other),
+            SortOrder::ModifiedAt => self.cmp_by_modified_at(other),
         };
+
+        if reverse {
+            ordering.reverse()
+        } else {
+            ordering
+        }
     }
 
     pub fn name(&self) -> &str {

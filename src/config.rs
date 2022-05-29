@@ -5,14 +5,16 @@ pub struct Config {
     lazy: bool,
     title_prefix: String,
     sort_order: SortOrder,
+    reverse: bool,
 }
 
 impl Config {
-    pub fn new(lazy: bool, title_prefix: String, sort_order: SortOrder) -> Self {
+    pub fn new(lazy: bool, title_prefix: String, sort_order: SortOrder, reverse: bool) -> Self {
         Self {
             lazy,
             title_prefix,
             sort_order,
+            reverse,
         }
     }
 
@@ -26,5 +28,9 @@ impl Config {
 
     pub fn sort_order(&self) -> &SortOrder {
         &self.sort_order
+    }
+
+    pub fn reverse(&self) -> bool {
+        self.reverse
     }
 }

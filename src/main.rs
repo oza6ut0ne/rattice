@@ -27,7 +27,8 @@ async fn main() -> Result<()> {
     app = app.layer(Extension(Arc::new(Config::new(
         !opt.eager,
         opt.title_prefix.clone(),
-        opt.sort_order(),
+        opt.sort_order()?,
+        opt.reverse,
     ))));
 
     let app = trace::add_trace_layer(app, opt.use_real_ip, opt.verbose);
