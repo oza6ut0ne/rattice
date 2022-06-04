@@ -57,7 +57,7 @@
       {% match file %}
         {% when File::Directory with {name, path, metadata: _} %}
           <div class="name">
-            <a href="/{{ path }}">{{ name }}/</a>
+            <a href="/{{ path }}{{ query }}">{{ name }}/</a>
           </div>
         {% when File::File with {name, path, media_type, metadata: _} %}
           {% if file.is_image() %}

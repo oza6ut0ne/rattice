@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path, sync::Arc};
 use anyhow::{anyhow, Result};
 use axum::{
     body::Body,
-    extract::Query,
+    extract::{Query, RawQuery},
     http::{Request, StatusCode, Uri},
     response::{IntoResponse, Response},
     routing::get,
@@ -26,6 +26,7 @@ pub fn add_handler(app: Router) -> Router {
 async fn handle_request(
     uri: Uri,
     Query(query): Query<HashMap<String, String>>,
+    RawQuery(raw_query): RawQuery,
     Extension(config): Extension<Arc<Config>>,
 ) -> Result<Response, AppError> {
     let file_response = serve_file(&uri).await;
@@ -35,7 +36,18 @@ async fn handle_request(
 
     let decoded_uri = percent_encoding::percent_decode_str(uri.path()).decode_utf8_lossy();
     let files = list_files(&decoded_uri, &query, &config).map_err(|_| AppError::NotFound)?;
-    let template = RatticeTemplate::new(&decoded_uri, files, config.lazy(), config.title_prefix());
+    let raw_query = raw_query
+        .as_ref()
+        .map(|r| format!("?{}", r))
+        .unwrap_or_default();
+
+    let template = RatticeTemplate::new(
+        &decoded_uri,
+        &raw_query,
+        files,
+        config.lazy(),
+        config.title_prefix(),
+    );
     Ok(HtmlTemplate(template).into_response())
 }
 

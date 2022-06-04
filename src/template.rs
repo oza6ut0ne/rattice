@@ -8,15 +8,23 @@ use crate::{error::AppError, model::File};
 #[template(path = "rattice.html")]
 pub(crate) struct RatticeTemplate<'a> {
     uri: &'a str,
+    query: &'a str,
     files: Vec<File>,
     lazy: bool,
     title_prefix: &'a str,
 }
 
 impl<'a> RatticeTemplate<'a> {
-    pub fn new(uri: &'a str, files: Vec<File>, lazy: bool, title_prefix: &'a str) -> Self {
+    pub fn new(
+        uri: &'a str,
+        query: &'a str,
+        files: Vec<File>,
+        lazy: bool,
+        title_prefix: &'a str,
+    ) -> Self {
         Self {
             uri,
+            query,
             files,
             lazy,
             title_prefix,
