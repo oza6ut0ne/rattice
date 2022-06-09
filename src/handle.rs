@@ -9,6 +9,7 @@ use axum::{
     routing::get,
     Extension, Router,
 };
+use hyper::HeaderMap;
 use tower::ServiceExt;
 use tower_http::services::ServeDir;
 
@@ -27,9 +28,10 @@ async fn handle_request(
     uri: Uri,
     Query(query): Query<HashMap<String, String>>,
     RawQuery(raw_query): RawQuery,
+    headers: HeaderMap,
     Extension(config): Extension<Arc<Config>>,
 ) -> Result<Response, AppError> {
-    let file_response = serve_file(&uri).await;
+    let file_response = serve_file(&uri, &headers).await;
     if file_response.is_ok() {
         return file_response;
     }
@@ -51,8 +53,14 @@ async fn handle_request(
     Ok(HtmlTemplate(template).into_response())
 }
 
-async fn serve_file(uri: &Uri) -> Result<Response, AppError> {
-    let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
+async fn serve_file(uri: &Uri, headers: &HeaderMap) -> Result<Response, AppError> {
+    let mut req = Request::builder().uri(uri);
+    let headers_mut = req.headers_mut().unwrap();
+    for (k, v) in headers.iter() {
+        headers_mut.insert(k, v.to_owned());
+    }
+    let req = req.body(Body::empty()).map_err(|_| AppError::BadRequest)?;
+
     match ServeDir::new(".")
         .append_index_html_on_directories(false)
         .oneshot(req)
