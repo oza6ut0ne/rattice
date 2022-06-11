@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use axum::{
     body::Body,
     extract::{Query, RawQuery},
-    http::{Request, StatusCode, Uri},
+    http::{header::CACHE_CONTROL, Request, StatusCode, Uri},
     response::{IntoResponse, Response},
     routing::get,
     Extension, Router,
@@ -51,9 +51,13 @@ async fn serve_file(uri: &Uri, headers: &HeaderMap) -> Result<Response, AppError
         .oneshot(req)
         .await
     {
-        Ok(res) => match res.status() {
+        Ok(mut res) => match res.status() {
             StatusCode::NOT_FOUND => Err(AppError::NotFound),
-            _ => Ok(res.into_response()),
+            _ => {
+                res.headers_mut()
+                    .insert(CACHE_CONTROL, "no-cache".parse().unwrap());
+                Ok(res.into_response())
+            }
         },
         Err(e) => Err(anyhow!(e).into()),
     }
