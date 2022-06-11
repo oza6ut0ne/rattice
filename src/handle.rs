@@ -35,22 +35,7 @@ async fn handle_request(
     if file_response.is_ok() {
         return file_response;
     }
-
-    let decoded_uri = percent_encoding::percent_decode_str(uri.path()).decode_utf8_lossy();
-    let files = list_files(&decoded_uri, &query, &config).map_err(|_| AppError::NotFound)?;
-    let raw_query = raw_query
-        .as_ref()
-        .map(|r| format!("?{}", r))
-        .unwrap_or_default();
-
-    let template = RatticeTemplate::new(
-        &decoded_uri,
-        &raw_query,
-        files,
-        config.lazy(),
-        config.title_prefix(),
-    );
-    Ok(HtmlTemplate(template).into_response())
+    serve_dir(&uri, &query, &raw_query.as_deref(), &config)
 }
 
 async fn serve_file(uri: &Uri, headers: &HeaderMap) -> Result<Response, AppError> {
@@ -72,6 +57,26 @@ async fn serve_file(uri: &Uri, headers: &HeaderMap) -> Result<Response, AppError
         },
         Err(e) => Err(anyhow!(e).into()),
     }
+}
+
+fn serve_dir(
+    uri: &Uri,
+    query: &HashMap<String, String>,
+    raw_query: &Option<&str>,
+    config: &Arc<Config>,
+) -> Result<Response, AppError> {
+    let decoded_uri = percent_encoding::percent_decode_str(uri.path()).decode_utf8_lossy();
+    let files = list_files(&decoded_uri, query, config).map_err(|_| AppError::NotFound)?;
+
+    let raw_query = raw_query.map(|r| format!("?{}", r)).unwrap_or_default();
+    let lazy = query
+        .get("lazy")
+        .and_then(|r| r.parse().ok())
+        .unwrap_or_else(|| config.lazy());
+
+    let template =
+        RatticeTemplate::new(&decoded_uri, &raw_query, files, lazy, config.title_prefix());
+    Ok(HtmlTemplate(template).into_response())
 }
 
 fn list_files(
@@ -103,6 +108,5 @@ fn list_files(
             )?,
         )
     }
-
     Ok(files)
 }
