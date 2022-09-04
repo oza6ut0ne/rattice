@@ -11,39 +11,48 @@
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
       }
       .grid {
-          height: 110px;
-          border: ridge;
+        height: 110px;
+        border: ridge;
       }
       .grid .name {
-          line-height:1.0;
+        line-height:1.0;
+      }
+
+      body.header-fixed {
+        padding-top: 100px;
       }
     }
     @media (min-width: 501px) {
       .mobile-visible {
         display: none;
       }
+
       .grid-container {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       }
       .grid {
-          height: 150px;
-          border: ridge;
+        height: 150px;
+        border: ridge;
       }
       .grid .name {
-          line-height:1.2;
+        line-height:1.2;
+      }
+
+      body.header-fixed {
+        padding-top: 80px;
       }
     }
 
     .grid .name {
-        height: 15%;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
+      height: 15%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
     .grid .content {
-        max-height: 85%;
-        max-width: 100%;
+      max-height: 85%;
+      max-width: 100%;
     }
 
     h1 {
@@ -51,24 +60,38 @@
       text-overflow: ellipsis;
       overflow: hidden;
     }
-    .controls {
+    #controls {
       margin-bottom: 4;
     }
-    .controls * {
+    #controls * {
       vertical-align: text-bottom;
+    }
+
+    #header {
+      width: 100%;
+      background-color: #fff;
+      top: -14px;
+      margin-top: 0;
+    }
+    #header.header-fixed {
+      position: fixed;
     }
   </style>
 </head>
 
 <body>
-  <h1>{{ uri }}</h1>
-  <div class="controls">
-    <input id="scaleSlider" name="scale" autocomplete="off" type="range" value="1.0" min="0.8" max="1.4" step="0.2">
-    <input id="widthSlider" name="width" autocomplete="off" type="range" value="1.0" min="0.5" max="1.0" step="0.125">
-    <br class="mobile-visible">
-    <input id="keepAspectRatioCheckbox" name="keepAspect" autocomplete="off" type="checkbox">
-    <label for="keepAspectRatioCheckbox">keep aspect ratio</label>
-  </div>
+  <header id="header">
+    <h1>{{ uri }}</h1>
+    <div id="controls">
+      <input id="scaleSlider" name="scale" autocomplete="off" type="range" value="1.0" min="0.8" max="1.4" step="0.2">
+      <input id="widthSlider" name="width" autocomplete="off" type="range" value="1.0" min="0.5" max="1.0" step="0.125">
+      <br class="mobile-visible">
+      <input id="keepAspectRatioCheckbox" name="keepAspect" autocomplete="off" type="checkbox">
+      <label for="keepAspectRatioCheckbox">keep aspect ratio</label>
+      <input id="fixHeaderCheckbox" name="fixHeader" autocomplete="off" type="checkbox">
+      <label for="fixHeaderCheckbox">fix header</label>
+    </div>
+  </header>
 
   <div id="grid-container" class="grid-container">
     {% for file in files %}
@@ -125,11 +148,27 @@
         }
       };
 
+      const applyFixHeader = () => {
+        const fixHeader = localStorage.fixHeader === "true";
+        if (fixHeader) {
+          document.body.classList.add("header-fixed");
+          document.getElementById("header").classList.add("header-fixed");
+        } else {
+          document.body.classList.remove("header-fixed");
+          document.getElementById("header").classList.remove("header-fixed");
+        }
+      };
+
       const onControlValueChange = (e) => {
         const value = e.target.type === "range" ? e.target.value : e.target.checked;
         localStorage[e.target.name] = value;
-        resize();
+        if (e.target.name === "fixHeader") {
+          applyFixHeader();
+        } else {
+          resize();
+        }
       };
+
       const initControl = (element) => {
         if (localStorage[element.name]) {
           if (element.type === "range") {
@@ -143,7 +182,8 @@
         }
         element.addEventListener('input', onControlValueChange);
       };
-      for (id of ["scaleSlider", "widthSlider", "keepAspectRatioCheckbox"]) {
+
+      for (id of ["scaleSlider", "widthSlider", "keepAspectRatioCheckbox", "fixHeaderCheckbox"]) {
         initControl(document.getElementById(id));
       }
 
@@ -160,6 +200,7 @@
       };
       onMediaQueryChange(mediaQuery);
       mediaQuery.addListener(onMediaQueryChange);
+      applyFixHeader();
     });
   </script>
 </body>
