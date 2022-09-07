@@ -56,8 +56,14 @@
     #controls {
       margin-bottom: 4;
     }
-    #controls * {
-      vertical-align: text-bottom;
+    #controls label {
+      display: inline-block;
+    }
+    #controls input {
+      vertical-align: middle;
+    }
+    #controls label span {
+      vertical-align: middle;
     }
 
     #header {
@@ -79,10 +85,12 @@
       <input id="scaleSlider" name="scale" autocomplete="off" type="range" value="1.0" min="0.8" max="1.4" step="0.2">
       <input id="widthSlider" name="width" autocomplete="off" type="range" value="1.0" min="0.5" max="1.0" step="0.125">
       <br class="mobile-visible">
-      <input id="keepAspectRatioCheckbox" name="keepAspect" autocomplete="off" type="checkbox">
-      <label for="keepAspectRatioCheckbox">keep aspect ratio</label>
-      <input id="fixHeaderCheckbox" name="fixHeader" autocomplete="off" type="checkbox">
-      <label for="fixHeaderCheckbox">fix header</label>
+      <label>
+        <input id="keepAspectRatioCheckbox" name="keepAspect" autocomplete="off" type="checkbox"><span>keep aspect ratio</span>
+      </label>
+      <label>
+        <input id="fixHeaderCheckbox" name="fixHeader" autocomplete="off" type="checkbox"><span>fix header</span>
+      </label>
     </div>
   </header>
 
