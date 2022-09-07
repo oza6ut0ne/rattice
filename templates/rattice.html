@@ -17,10 +17,6 @@
       .grid .name {
         line-height:1.0;
       }
-
-      body.header-fixed {
-        padding-top: 100px;
-      }
     }
     @media (min-width: 501px) {
       .mobile-visible {
@@ -37,10 +33,6 @@
       }
       .grid .name {
         line-height:1.2;
-      }
-
-      body.header-fixed {
-        padding-top: 80px;
       }
     }
 
@@ -152,10 +144,15 @@
       const applyFixHeader = () => {
         const fixHeader = localStorage.fixHeader === "true";
         if (fixHeader) {
-          document.body.classList.add("header-fixed");
-          document.getElementById("header").classList.add("header-fixed");
+          const header = document.getElementById("header");
+          header.classList.add("header-fixed");
+
+          const rect = header.getBoundingClientRect();
+          const margin = parseFloat(window.getComputedStyle(document.body).marginTop);
+          const padding = rect.height + rect.top - margin;
+          document.body.style.paddingTop = padding + 'px';
         } else {
-          document.body.classList.remove("header-fixed");
+          document.body.style.paddingTop = '';
           document.getElementById("header").classList.remove("header-fixed");
         }
       };
@@ -202,6 +199,7 @@
       onMediaQueryChange(mediaQuery);
       mediaQuery.addListener(onMediaQueryChange);
       applyFixHeader();
+      window.onresize = applyFixHeader;
     });
   </script>
 </body>
