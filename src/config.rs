@@ -6,6 +6,7 @@ pub struct Config {
     title_prefix: String,
     sort_order: SortOrder,
     reverse: bool,
+    ignore_query_params: bool,
     filter_dir_pattern: Option<String>,
     filter_file_pattern: Option<String>,
 }
@@ -16,6 +17,7 @@ impl Config {
         title_prefix: String,
         sort_order: SortOrder,
         reverse: bool,
+        ignore_query_params: bool,
         filter_dir_pattern: Option<String>,
         filter_file_pattern: Option<String>,
     ) -> Self {
@@ -24,6 +26,7 @@ impl Config {
             title_prefix,
             sort_order,
             reverse,
+            ignore_query_params,
             filter_dir_pattern,
             filter_file_pattern,
         }
@@ -43,6 +46,10 @@ impl Config {
 
     pub fn reverse(&self) -> bool {
         self.reverse
+    }
+
+    pub fn ignore_query_params(&self) -> bool {
+        self.ignore_query_params
     }
 
     pub fn filter_dir_pattern(&self) -> Option<&str> {

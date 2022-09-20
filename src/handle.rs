@@ -29,14 +29,19 @@ pub fn add_handler(app: Router) -> Router {
 
 async fn handle_request(
     uri: Uri,
-    Query(query): Query<HashMap<String, String>>,
-    RawQuery(raw_query): RawQuery,
+    Query(mut query): Query<HashMap<String, String>>,
+    RawQuery(mut raw_query): RawQuery,
     headers: HeaderMap,
     Extension(config): Extension<Arc<Config>>,
 ) -> Result<Response, AppError> {
     let file_response = serve_file(&uri, &headers).await;
     if file_response.is_ok() || !matches!(file_response, Err(AppError::NotFound)) {
         return file_response;
+    }
+
+    if config.ignore_query_params() {
+        query.clear();
+        raw_query.take();
     }
     serve_dir(&uri, &query, &raw_query.as_deref(), &config)
 }

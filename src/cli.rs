@@ -107,6 +107,11 @@ pub struct Opt {
     #[clap(short, long, env = "RATTICE_EAGER")]
     pub eager: bool,
 
+    /// Ignore query parameters
+    #[clap(help_heading = "FLAGS")]
+    #[clap(short, long, env = "RATTICE_IGNORE_QUERY_PARAMS")]
+    pub ignore_query_params: bool,
+
     /// Use X-Real-IP as client address in logs
     #[clap(help_heading = "FLAGS")]
     #[clap(short = 'x', long, env = "RATTICE_USE_REAL_IP")]
