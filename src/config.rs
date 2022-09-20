@@ -6,15 +6,26 @@ pub struct Config {
     title_prefix: String,
     sort_order: SortOrder,
     reverse: bool,
+    filter_dir_pattern: Option<String>,
+    filter_file_pattern: Option<String>,
 }
 
 impl Config {
-    pub fn new(lazy: bool, title_prefix: String, sort_order: SortOrder, reverse: bool) -> Self {
+    pub fn new(
+        lazy: bool,
+        title_prefix: String,
+        sort_order: SortOrder,
+        reverse: bool,
+        filter_dir_pattern: Option<String>,
+        filter_file_pattern: Option<String>,
+    ) -> Self {
         Self {
             lazy,
             title_prefix,
             sort_order,
             reverse,
+            filter_dir_pattern,
+            filter_file_pattern,
         }
     }
 
@@ -32,5 +43,13 @@ impl Config {
 
     pub fn reverse(&self) -> bool {
         self.reverse
+    }
+
+    pub fn filter_dir_pattern(&self) -> Option<&str> {
+        self.filter_dir_pattern.as_deref()
+    }
+
+    pub fn filter_file_pattern(&self) -> Option<&str> {
+        self.filter_file_pattern.as_deref()
     }
 }

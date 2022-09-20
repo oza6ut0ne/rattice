@@ -10,6 +10,7 @@ use axum::{
     Extension, Router,
 };
 use hyper::HeaderMap;
+use regex::RegexBuilder;
 use tower::ServiceExt;
 use tower_http::services::ServeDir;
 
@@ -19,6 +20,8 @@ use crate::{
     model::File,
     template::{HtmlTemplate, RatticeTemplate},
 };
+
+const REGEX_SIZE_LIMIT: usize = 1024 * 1024;
 
 pub fn add_handler(app: Router) -> Router {
     app.nest("/", get(handle_request))
@@ -32,7 +35,7 @@ async fn handle_request(
     Extension(config): Extension<Arc<Config>>,
 ) -> Result<Response, AppError> {
     let file_response = serve_file(&uri, &headers).await;
-    if file_response.is_ok() {
+    if file_response.is_ok() || !matches!(file_response, Err(AppError::NotFound)) {
         return file_response;
     }
     serve_dir(&uri, &query, &raw_query.as_deref(), &config)
@@ -70,7 +73,7 @@ fn serve_dir(
     config: &Arc<Config>,
 ) -> Result<Response, AppError> {
     let decoded_uri = percent_encoding::percent_decode_str(uri.path()).decode_utf8_lossy();
-    let files = list_files(&decoded_uri, query, config).map_err(|_| AppError::NotFound)?;
+    let files = list_files(&decoded_uri, query, config)?;
 
     let raw_query = raw_query.map(|r| format!("?{}", r)).unwrap_or_default();
     let lazy = query
@@ -87,10 +90,54 @@ fn list_files(
     uri: &str,
     query: &HashMap<String, String>,
     config: &Arc<Config>,
-) -> Result<Vec<File>> {
-    let entries = std::fs::read_dir(format!(".{}", uri))?.collect::<Result<Vec<_>, _>>()?;
+) -> Result<Vec<File>, AppError> {
+    let pattern_dir = query
+        .get("filter_dir")
+        .map(|p| p.as_str())
+        .or_else(|| config.filter_dir_pattern());
+    let pattern_file = query
+        .get("filter_file")
+        .map(|p| p.as_str())
+        .or_else(|| config.filter_file_pattern());
+
+    let re_dir = match pattern_dir {
+        Some(pattern) => Some(
+            RegexBuilder::new(pattern)
+                .size_limit(REGEX_SIZE_LIMIT)
+                .build()
+                .map_err(|_| AppError::BadRequest)?,
+        ),
+        None => None,
+    };
+    let re_file = match pattern_file {
+        Some(pattern) => Some(
+            RegexBuilder::new(pattern)
+                .size_limit(REGEX_SIZE_LIMIT)
+                .build()
+                .map_err(|_| AppError::BadRequest)?,
+        ),
+        None => None,
+    };
+
+    let entries = std::fs::read_dir(format!(".{}", uri))
+        .map_err(|_| AppError::NotFound)?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| AppError::NotFound)?;
     let mut files = entries
         .iter()
+        .filter(|e| {
+            if e.path().is_dir() {
+                if let Some(re) = &re_dir {
+                    re.is_match(e.file_name().to_string_lossy().as_ref())
+                } else {
+                    true
+                }
+            } else if let Some(re) = &re_file {
+                re.is_match(e.file_name().to_string_lossy().as_ref())
+            } else {
+                true
+            }
+        })
         .map(|e| File::new(&e.path(), e.metadata().ok()))
         .collect::<Result<Vec<_>>>()?;
 

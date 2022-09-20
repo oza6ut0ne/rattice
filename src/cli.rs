@@ -53,6 +53,14 @@ pub struct Opt {
     #[clap(arg_enum, short, long, default_value = "name", env = "RATTICE_SORT_BY")]
     sort_by: SortBy,
 
+    /// Regex for filter directories
+    #[clap(long, env = "RATTICE_FILTER_DIR")]
+    pub filter_dir: Option<String>,
+
+    /// Regex for filter files
+    #[clap(short, long, env = "RATTICE_FILTER_FILE")]
+    pub filter_file: Option<String>,
+
     /// Username for Basic Authentication
     #[clap(short, long, env = "RATTICE_USER", hide_env_values = true)]
     pub username: Option<String>,

@@ -29,6 +29,8 @@ async fn main() -> Result<()> {
         opt.title_prefix.clone(),
         opt.sort_order()?,
         opt.reverse,
+        opt.filter_dir.clone(),
+        opt.filter_file.clone(),
     ))));
 
     let app = trace::add_trace_layer(app, opt.use_real_ip, opt.verbose);
