@@ -4,7 +4,8 @@ use anyhow::{anyhow, bail, Result};
 use clap::{AppSettings::DeriveDisplayOrder, ArgEnum, Parser};
 use rand::Rng;
 
-use rattice::model::SortOrder;
+use rattice::{handle::REGEX_SIZE_LIMIT, model::SortOrder};
+use regex::RegexBuilder;
 
 const RANDOM_CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                                   abcdefghijklmnopqrstuvwxyz\
@@ -143,10 +144,16 @@ impl Opt {
             _ => { /* nop. */ }
         }
 
+        if let Some(pattern) = opt.filter_dir.as_ref() {
+            validate_regex(pattern)?
+        }
+        if let Some(pattern) = opt.filter_file.as_ref() {
+            validate_regex(pattern)?
+        }
+
         if matches!(&opt.username, Some(name) if name.contains(':')) {
             bail!("Colon ':' is not allowed for username");
         }
-
         if let Some(length) = opt.random_credencial {
             opt.username = opt.username.or_else(|| {
                 let username = get_random_string(length);
@@ -189,6 +196,16 @@ impl Opt {
             .get_name()
             .parse()
             .map_err(|e: String| anyhow!(e))
+    }
+}
+
+fn validate_regex(pattern: &str) -> Result<()> {
+    match RegexBuilder::new(pattern)
+        .size_limit(REGEX_SIZE_LIMIT)
+        .build()
+    {
+        Ok(_) => Ok(()),
+        Err(e) => Err(anyhow!(e)),
     }
 }
 
