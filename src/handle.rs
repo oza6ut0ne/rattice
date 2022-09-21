@@ -35,7 +35,7 @@ async fn handle_request(
     Extension(config): Extension<Arc<Config>>,
 ) -> Result<Response, AppError> {
     let file_response = serve_file(&uri, &headers).await;
-    if file_response.is_ok() || !matches!(file_response, Err(AppError::NotFound)) {
+    if file_response.is_ok() || !matches!(file_response, Err(AppError::NotFound(_))) {
         return file_response;
     }
 
@@ -52,7 +52,9 @@ async fn serve_file(uri: &Uri, headers: &HeaderMap) -> Result<Response, AppError
     for (k, v) in headers.iter() {
         headers_mut.insert(k, v.to_owned());
     }
-    let req = req.body(Body::empty()).map_err(|_| AppError::BadRequest)?;
+    let req = req
+        .body(Body::empty())
+        .map_err(|e| AppError::BadRequest(e.into()))?;
 
     match ServeDir::new(".")
         .append_index_html_on_directories(false)
@@ -60,7 +62,7 @@ async fn serve_file(uri: &Uri, headers: &HeaderMap) -> Result<Response, AppError
         .await
     {
         Ok(mut res) => match res.status() {
-            StatusCode::NOT_FOUND => Err(AppError::NotFound),
+            StatusCode::NOT_FOUND => Err(AppError::NotFound(anyhow!("ServeDir returned 404"))),
             _ => {
                 res.headers_mut()
                     .insert(CACHE_CONTROL, "no-cache".parse().unwrap());
@@ -110,7 +112,7 @@ fn list_files(
             RegexBuilder::new(pattern)
                 .size_limit(REGEX_SIZE_LIMIT)
                 .build()
-                .map_err(|_| AppError::BadRequest)?,
+                .map_err(|e| AppError::BadRequest(e.into()))?,
         ),
         None => None,
     };
@@ -119,15 +121,15 @@ fn list_files(
             RegexBuilder::new(pattern)
                 .size_limit(REGEX_SIZE_LIMIT)
                 .build()
-                .map_err(|_| AppError::BadRequest)?,
+                .map_err(|e| AppError::BadRequest(e.into()))?,
         ),
         None => None,
     };
 
     let entries = std::fs::read_dir(format!(".{}", uri))
-        .map_err(|_| AppError::NotFound)?
+        .map_err(|e| AppError::NotFound(e.into()))?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| AppError::NotFound)?;
+        .map_err(|e| AppError::NotFound(e.into()))?;
     let mut files = entries
         .iter()
         .filter(|e| {
