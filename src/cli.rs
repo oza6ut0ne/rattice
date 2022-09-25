@@ -55,7 +55,7 @@ pub struct Opt {
     sort_by: SortBy,
 
     /// Regex for filter directories
-    #[clap(long, env = "RATTICE_FILTER_DIR")]
+    #[clap(short = 'F', long, env = "RATTICE_FILTER_DIR")]
     pub filter_dir: Option<String>,
 
     /// Regex for filter files
