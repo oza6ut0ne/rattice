@@ -31,3 +31,6 @@ tower = "0.4.11"
 tower-http = { version = "0.3.4", features = ["auth", "fs", "trace"] }
 tracing = "0.1.29"
 tracing-subscriber = { version = "0.3.2", features = ["env-filter"] }
+
+[target.'cfg(all(target_env = "musl", target_pointer_width = "64"))'.dependencies]
+tikv-jemallocator = "0.5"
