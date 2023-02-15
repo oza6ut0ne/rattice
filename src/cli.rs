@@ -20,7 +20,7 @@ const DEFAULT_BIND_ADDRESS: &str = "0.0.0.0";
 #[derive(ArgEnum, Clone, Debug)]
 enum SortBy {
     Name,
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(not(all(target_os = "linux", target_env = "musl")))]
     Created,
     Modified,
 }

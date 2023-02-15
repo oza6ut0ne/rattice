@@ -45,7 +45,8 @@ OPTIONS:
             Specify document root directory [env: RATTICE_DOCROOT=]
 
     -s, --sort-by <SORT_BY>
-            Sort order [env: RATTICE_SORT_BY=] [default: name] [possible values: name, modified]
+            Sort order [env: RATTICE_SORT_BY=] [default: name] [possible values: name, created,
+            modified]
 
     -F, --filter-dir <FILTER_DIR>
             Regex for filter directories [env: RATTICE_FILTER_DIR=]
