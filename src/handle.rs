@@ -10,6 +10,7 @@ use axum::{
     Extension, Router,
 };
 use hyper::HeaderMap;
+use rayon::prelude::*;
 use regex::RegexBuilder;
 use tower::ServiceExt;
 use tower_http::services::ServeDir;
@@ -131,7 +132,7 @@ fn list_files(
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| AppError::NotFound(e.into()))?;
     let mut files = entries
-        .iter()
+        .par_iter()
         .filter(|e| {
             if e.path().is_dir() {
                 if let Some(re) = &re_dir {
@@ -155,7 +156,7 @@ fn list_files(
         .and_then(|r| r.parse().ok())
         .unwrap_or_else(|| config.reverse());
 
-    files.sort_unstable_by(|a, b| a.cmp_by(b, order, reverse));
+    files.par_sort_unstable_by(|a, b| a.cmp_by(b, order, reverse));
     if uri != "/" {
         files.insert(
             0,

@@ -25,6 +25,7 @@ clap = { version = "3.1.2", features = ["env", "derive"] }
 hyper = { version = "0.14.15", features = ["full"] }
 percent-encoding = "2.1.0"
 rand = "0.8.4"
+rayon = "1.6.1"
 regex = "1"
 tokio = { version = "1.14.0", features = ["full"] }
 tower = "0.4.11"
