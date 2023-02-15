@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{collections::HashMap, fs::DirEntry, path::Path, sync::Arc};
 
 use anyhow::{anyhow, Result};
 use axum::{
@@ -11,7 +11,7 @@ use axum::{
 };
 use hyper::HeaderMap;
 use rayon::prelude::*;
-use regex::RegexBuilder;
+use regex::{Regex, RegexBuilder};
 use tower::ServiceExt;
 use tower_http::services::ServeDir;
 
@@ -99,53 +99,17 @@ fn list_files(
     query: &HashMap<String, String>,
     config: &Arc<Config>,
 ) -> Result<Vec<File>, AppError> {
-    let pattern_dir = query
-        .get("filter_dir")
-        .map(|p| p.as_str())
-        .or_else(|| config.filter_dir_pattern());
-    let pattern_file = query
-        .get("filter_file")
-        .map(|p| p.as_str())
-        .or_else(|| config.filter_file_pattern());
-
-    let re_dir = match pattern_dir {
-        Some(pattern) => Some(
-            RegexBuilder::new(pattern)
-                .size_limit(REGEX_SIZE_LIMIT)
-                .build()
-                .map_err(|e| AppError::BadRequest(e.into()))?,
-        ),
-        None => None,
-    };
-    let re_file = match pattern_file {
-        Some(pattern) => Some(
-            RegexBuilder::new(pattern)
-                .size_limit(REGEX_SIZE_LIMIT)
-                .build()
-                .map_err(|e| AppError::BadRequest(e.into()))?,
-        ),
-        None => None,
-    };
+    let re_dir = extract_regex("filter_dir", query, || config.filter_dir_pattern())?;
+    let re_file = extract_regex("filter_file", query, || config.filter_file_pattern())?;
 
     let entries = std::fs::read_dir(format!(".{}", uri))
         .map_err(|e| AppError::NotFound(e.into()))?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| AppError::NotFound(e.into()))?;
+
     let mut files = entries
         .par_iter()
-        .filter(|e| {
-            if e.path().is_dir() {
-                if let Some(re) = &re_dir {
-                    re.is_match(e.file_name().to_string_lossy().as_ref())
-                } else {
-                    true
-                }
-            } else if let Some(re) = &re_file {
-                re.is_match(e.file_name().to_string_lossy().as_ref())
-            } else {
-                true
-            }
-        })
+        .filter(|e| filter_entry(e, &re_dir, &re_file))
         .map(|e| File::new(&e.path(), e.metadata().ok()))
         .collect::<Result<Vec<_>>>()?;
 
@@ -168,4 +132,38 @@ fn list_files(
         )
     }
     Ok(files)
+}
+
+fn extract_regex<'a>(
+    key: &'a str,
+    query: &'a HashMap<String, String>,
+    default_pattern: impl FnOnce() -> Option<&'a str>,
+) -> Result<Option<Regex>, AppError> {
+    let pattern = query.get(key).map(|p| p.as_str()).or_else(default_pattern);
+    let regex = match pattern {
+        Some(pattern) => Some(
+            RegexBuilder::new(pattern)
+                .size_limit(REGEX_SIZE_LIMIT)
+                .build()
+                .map_err(|e| AppError::BadRequest(e.into()))?,
+        ),
+        None => None,
+    };
+    Ok(regex)
+}
+
+fn filter_entry(entry: &DirEntry, regex_dir: &Option<Regex>, regex_file: &Option<Regex>) -> bool {
+    if entry.path().is_dir() {
+        is_filename_match(entry, regex_dir)
+    } else {
+        is_filename_match(entry, regex_file)
+    }
+}
+
+fn is_filename_match(entry: &DirEntry, regex: &Option<Regex>) -> bool {
+    if let Some(re) = regex {
+        re.is_match(entry.file_name().to_string_lossy().as_ref())
+    } else {
+        true
+    }
 }
