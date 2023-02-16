@@ -1,6 +1,6 @@
 [package]
 name = "rattice"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Ryota Okimatsu <oza6ut0ne@gmail.com>"]
 description = "A media viewer for web browsers."
 license = "MIT OR Apache-2.0"
