@@ -14,18 +14,15 @@ pub fn add_trace_layer(app: Router, real_ip_header: Option<String>, verbosity: u
         TraceLayer::new_for_http()
             .make_span_with(move |request: &Request<Body>| {
                 let addr = if let Some(header) = &real_ip_header {
-                    request
-                        .headers()
-                        .get(header)
-                        .and_then(|i| i.to_str().ok())
-                        .unwrap_or("None")
-                        .to_owned()
+                    let real_ip = request.headers().get(header).and_then(|i| i.to_str().ok());
+
+                    if let Some(ip) = real_ip {
+                        ip.to_owned()
+                    } else {
+                        extract_client_socket_addr(request)
+                    }
                 } else {
-                    request
-                        .extensions()
-                        .get::<ConnectInfo<SocketAddr>>()
-                        .map(|ci| ci.0.to_string())
-                        .unwrap_or_else(|| "None".to_owned())
+                    extract_client_socket_addr(request)
                 };
 
                 let encoded_uri = request
@@ -74,4 +71,12 @@ pub fn add_trace_layer(app: Router, real_ip_header: Option<String>, verbosity: u
                 },
             ),
     )
+}
+
+fn extract_client_socket_addr(request: &Request<Body>) -> String {
+    request
+        .extensions()
+        .get::<ConnectInfo<SocketAddr>>()
+        .map(|ci| ci.0.to_string())
+        .unwrap_or_else(|| "None".to_owned())
 }
