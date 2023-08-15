@@ -73,11 +73,14 @@ OPTIONS:
     -t, --title-prefix <TITLE_PREFIX>
             Prefix for HTML title tag [env: RATTICE_TITLE_PREFIX=] [default: Rattice]
 
+    -x, --real-ip-header <REAL_IP_HEADER>
+            Request header field to show as client address in logs (e.g. X-Real-IP) [env:
+            RATTICE_REAL_IP_HEADER=]
+
 FLAGS:
     -r, --reverse                Reverse sort order [env: RATTICE_REVERSE=]
     -e, --eager                  Disable lazy image loading [env: RATTICE_EAGER=]
     -i, --ignore-query-params    Ignore query parameters [env: RATTICE_IGNORE_QUERY_PARAMS=]
-    -x, --use-real-ip            Use X-Real-IP as client address in logs [env: RATTICE_USE_REAL_IP=]
     -v, --verbose                Increase log level (-v, -vv, -vvv, -vvvv)
     -h, --help                   Print help information
     -V, --version                Print version information
