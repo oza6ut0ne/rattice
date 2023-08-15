@@ -9,14 +9,14 @@ use axum::{
 use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
 use tracing::Span;
 
-pub fn add_trace_layer(app: Router, use_real_ip: bool, verbosity: u8) -> Router {
+pub fn add_trace_layer(app: Router, real_ip_header: Option<String>, verbosity: u8) -> Router {
     app.layer(
         TraceLayer::new_for_http()
             .make_span_with(move |request: &Request<Body>| {
-                let addr = if use_real_ip {
+                let addr = if let Some(header) = &real_ip_header {
                     request
                         .headers()
-                        .get("X-Real-IP")
+                        .get(header)
                         .and_then(|i| i.to_str().ok())
                         .unwrap_or("None")
                         .to_owned()

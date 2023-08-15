@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
         opt.filter_file.clone(),
     ))));
 
-    let app = trace::add_trace_layer(app, opt.use_real_ip, opt.verbose);
+    let app = trace::add_trace_layer(app, opt.real_ip_header.clone(), opt.verbose);
     let addr = format!("{}:{}", opt.bind_address, opt.port)
         .to_socket_addrs()?
         .next()

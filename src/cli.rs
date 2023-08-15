@@ -98,6 +98,10 @@ pub struct Opt {
     #[clap(short, long, default_value = "Rattice", env = "RATTICE_TITLE_PREFIX")]
     pub title_prefix: String,
 
+    /// Request header field to show as client address in logs (e.g. X-Real-IP)
+    #[clap(short = 'x', long, env = "RATTICE_REAL_IP_HEADER")]
+    pub real_ip_header: Option<String>,
+
     /// Reverse sort order
     #[clap(help_heading = "FLAGS")]
     #[clap(short, long, env = "RATTICE_REVERSE")]
@@ -112,11 +116,6 @@ pub struct Opt {
     #[clap(help_heading = "FLAGS")]
     #[clap(short, long, env = "RATTICE_IGNORE_QUERY_PARAMS")]
     pub ignore_query_params: bool,
-
-    /// Use X-Real-IP as client address in logs
-    #[clap(help_heading = "FLAGS")]
-    #[clap(short = 'x', long, env = "RATTICE_USE_REAL_IP")]
-    pub use_real_ip: bool,
 
     /// Increase log level (-v, -vv, -vvv, -vvvv)
     #[clap(help_heading = "FLAGS")]
