@@ -25,7 +25,7 @@ use crate::{
 pub const REGEX_SIZE_LIMIT: usize = 1024 * 1024;
 
 pub fn add_handler(app: Router) -> Router {
-    app.nest("/", get(handle_request))
+    app.nest_service("/", get(handle_request))
 }
 
 async fn handle_request(
