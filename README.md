@@ -48,6 +48,9 @@ OPTIONS:
             Sort order [env: RATTICE_SORT_BY=] [default: name] [possible values: name, created,
             modified]
 
+    -D, --depth <DEPTH>
+            Max display depth of the directory tree [env: RATTICE_DEPTH=] [default: 1]
+
     -F, --filter-dir <FILTER_DIR>
             Regex for filter directories [env: RATTICE_FILTER_DIR=]
 
