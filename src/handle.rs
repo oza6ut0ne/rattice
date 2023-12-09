@@ -18,7 +18,7 @@ use tower_http::services::ServeDir;
 use crate::{
     config::Config,
     error::AppError,
-    model::File,
+    model::{File, FilesContainer, SortOrder},
     template::{HtmlTemplate, RatticeTemplate},
 };
 
@@ -81,7 +81,7 @@ fn serve_dir(
     config: &Arc<Config>,
 ) -> Result<Response, AppError> {
     let decoded_uri = percent_encoding::percent_decode_str(uri.path()).decode_utf8_lossy();
-    let files = list_files(&decoded_uri, query, config)?;
+    let containers = walk_dir(&decoded_uri, query, config)?;
 
     let raw_query = raw_query.map(|r| format!("?{}", r)).unwrap_or_default();
     let lazy = query
@@ -89,29 +89,24 @@ fn serve_dir(
         .and_then(|r| r.parse().ok())
         .unwrap_or_else(|| config.lazy());
 
-    let template =
-        RatticeTemplate::new(&decoded_uri, &raw_query, files, lazy, config.title_prefix());
+    let template = RatticeTemplate::new(
+        &decoded_uri,
+        &raw_query,
+        containers,
+        lazy,
+        config.title_prefix(),
+    );
     Ok(HtmlTemplate(template).into_response())
 }
 
-fn list_files(
+fn walk_dir(
     uri: &str,
     query: &HashMap<String, String>,
     config: &Arc<Config>,
-) -> Result<Vec<File>, AppError> {
+) -> Result<Vec<FilesContainer>, AppError> {
     let re_dir = extract_regex("filter_dir", query, || config.filter_dir_pattern())?;
     let re_file = extract_regex("filter_file", query, || config.filter_file_pattern())?;
-
-    let entries = std::fs::read_dir(format!(".{}", uri))
-        .map_err(|e| AppError::NotFound(e.into()))?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| AppError::NotFound(e.into()))?;
-
-    let mut files = entries
-        .par_iter()
-        .filter(|e| filter_entry(e, &re_dir, &re_file))
-        .map(|e| File::new(&e.path(), e.metadata().ok()))
-        .collect::<Result<Vec<_>>>()?;
+    let filter_op = |e: &DirEntry| filter_entry(e, &re_dir, &re_file);
 
     let order = query.get("order").and_then(|o| o.parse().ok());
     let order = order.as_ref().unwrap_or_else(|| config.sort_order());
@@ -120,8 +115,63 @@ fn list_files(
         .and_then(|r| r.parse().ok())
         .unwrap_or_else(|| config.reverse());
 
+    let depth = query
+        .get("depth")
+        .and_then(|o| o.parse().ok())
+        .unwrap_or(config.depth());
+
+    let mut containers = vec![];
+    let mut next_targets = vec![uri.to_owned()];
+
+    for i in 0..depth {
+        let mut child_containers = vec![];
+        for target_uri in &next_targets {
+            let files = list_files(target_uri, order, reverse, filter_op, i == 0)?;
+            child_containers.push(FilesContainer::new(target_uri, files))
+        }
+
+        if i < depth - 1 {
+            next_targets.clear();
+            for container in &child_containers {
+                let mut urls = container
+                    .files()
+                    .par_iter()
+                    .filter(|f| f.is_dir() && f.name() != "..")
+                    .map(|f| f.to_uri())
+                    .collect();
+                next_targets.append(&mut urls)
+            }
+        }
+
+        containers.append(&mut child_containers);
+        if next_targets.is_empty() {
+            break;
+        }
+    }
+
+    Ok(containers)
+}
+
+fn list_files(
+    uri: &str,
+    order: &SortOrder,
+    reverse: bool,
+    filter_op: impl Fn(&DirEntry) -> bool + Sync + Send,
+    add_parent: bool,
+) -> Result<Vec<File>, AppError> {
+    let entries = std::fs::read_dir(format!(".{}", uri))
+        .map_err(|e| AppError::NotFound(e.into()))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| AppError::NotFound(e.into()))?;
+
+    let mut files = entries
+        .par_iter()
+        .filter(|e| filter_op(e))
+        .map(|e| File::new(&e.path(), e.metadata().ok()))
+        .collect::<Result<Vec<_>>>()?;
+
     files.par_sort_unstable_by(|a, b| a.cmp_by(b, order, reverse));
-    if uri != "/" {
+    if uri != "/" && add_parent {
         files.insert(
             0,
             File::new_with_name(

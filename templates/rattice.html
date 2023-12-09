@@ -47,6 +47,19 @@
       max-width: 100%;
     }
 
+    .grid-container + br:last-of-type {
+      display: none;
+    }
+
+    h2 {
+      margin-block-start: 0em;
+      margin-block-end: 0.32em;
+      padding-top: 0.83em;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: pre;
+    }
+
     h1 {
       margin-block-end: 0.32em;
       text-overflow: ellipsis;
@@ -95,37 +108,43 @@
     </div>
   </header>
 
-  <div id="grid-container" class="grid-container">
-    {% for file in files %}
-    <div class="grid" title="{{ file.name() }}">
-      {% match file %}
-        {% when File::Directory with {name, path, metadata: _} %}
-          <div class="name">
-            <a href="/{{ path }}{{ query }}">{{ name }}/</a>
-          </div>
-        {% when File::File with {name, path, media_type, metadata: _} %}
-          {% if file.is_image() %}
-            <a href="/{{ path }}">
-              <img class="content" src="/{{ path }}" {% if lazy %} loading="lazy" {% endif %}>
-            </a>
-          {% else if file.is_video() %}
-            <a href="/{{ path }}">
-              <video class="content" src="/{{ path }}" controls preload="metadata">
-            </a>
-          {% endif %}
-          <div class="name">
-            <a href="/{{ path }}">{{ name }}</a>
-          </div>
-      {% endmatch %}
+  {% for container in containers %}
+    {% if containers.len() > 1 %}
+      <h2>{{ container.uri() }}</h2>
+    {% endif %}
+    <div class="grid-container">
+      {% for file in container.files() %}
+      <div class="grid" title="{{ file.name() }}">
+        {% match file %}
+          {% when File::Directory with {name, path, metadata: _} %}
+            <div class="name">
+              <a href="/{{ path }}{{ query }}">{{ name }}/</a>
+            </div>
+          {% when File::File with {name, path, media_type, metadata: _} %}
+            {% if file.is_image() %}
+              <a href="/{{ path }}">
+                <img class="content" src="/{{ path }}" {% if lazy %} loading="lazy" {% endif %}>
+              </a>
+            {% else if file.is_video() %}
+              <a href="/{{ path }}">
+                <video class="content" src="/{{ path }}" controls preload="metadata">
+              </a>
+            {% endif %}
+            <div class="name">
+              <a href="/{{ path }}">{{ name }}</a>
+            </div>
+        {% endmatch %}
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
+    <br>
+  {% endfor %}
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       let defaultHeight;
       let defaultWidth;
-      const container = document.getElementById("grid-container");
+      const containers = document.getElementsByClassName("grid-container");
       const grids = document.getElementsByClassName("grid");
       const resize = () => {
         const scale = localStorage.scale;
@@ -133,7 +152,9 @@
         const keepAspect = localStorage.keepAspect === "true";
         const height = defaultHeight * scale;
         const width = defaultWidth * widthScale * scale;
-        container.style.gridTemplateColumns = "repeat(auto-fill, minmax(" + width + "px, 1fr))";
+        for (container of containers) {
+          container.style.gridTemplateColumns = "repeat(auto-fill, minmax(" + width + "px, 1fr))";
+        }
         for (grid of grids){
           grid.style.height = height + "px";
           const content = grid.getElementsByClassName("content")[0]

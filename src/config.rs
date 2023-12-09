@@ -6,17 +6,20 @@ pub struct Config {
     title_prefix: String,
     sort_order: SortOrder,
     reverse: bool,
+    depth: u32,
     ignore_query_params: bool,
     filter_dir_pattern: Option<String>,
     filter_file_pattern: Option<String>,
 }
 
 impl Config {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         lazy: bool,
         title_prefix: String,
         sort_order: SortOrder,
         reverse: bool,
+        depth: u32,
         ignore_query_params: bool,
         filter_dir_pattern: Option<String>,
         filter_file_pattern: Option<String>,
@@ -26,6 +29,7 @@ impl Config {
             title_prefix,
             sort_order,
             reverse,
+            depth,
             ignore_query_params,
             filter_dir_pattern,
             filter_file_pattern,
@@ -46,6 +50,10 @@ impl Config {
 
     pub fn reverse(&self) -> bool {
         self.reverse
+    }
+
+    pub fn depth(&self) -> u32 {
+        self.depth
     }
 
     pub fn ignore_query_params(&self) -> bool {

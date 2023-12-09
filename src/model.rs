@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, fs::Metadata, path::Path, str::FromStr, time::SystemTime};
 
 use anyhow::{anyhow, Result};
-use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+use percent_encoding::{percent_decode_str, utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 
 const FRAGMENT: &AsciiSet = &NON_ALPHANUMERIC.remove(b'/').remove(b'.');
 
@@ -35,6 +35,11 @@ impl FromStr for SortOrder {
     }
 }
 
+pub(crate) struct FilesContainer {
+    uri: String,
+    files: Vec<File>,
+}
+
 pub(crate) enum MediaType {
     Image,
     Video,
@@ -53,6 +58,24 @@ pub(crate) enum File {
         media_type: MediaType,
         metadata: Option<Metadata>,
     },
+}
+
+impl FilesContainer {
+    pub fn new<T>(uri: T, files: Vec<File>) -> Self
+    where
+        T: Into<String>,
+    {
+        let uri = uri.into();
+        FilesContainer { uri, files }
+    }
+
+    pub fn uri(&self) -> &str {
+        &self.uri
+    }
+
+    pub fn files(&self) -> &Vec<File> {
+        &self.files
+    }
 }
 
 impl MediaType {
@@ -156,7 +179,27 @@ impl File {
         }
     }
 
-    fn is_dir(&self) -> bool {
+    fn path(&self) -> &str {
+        match self {
+            Self::Directory {
+                name: _,
+                path,
+                metadata: _,
+            } => path,
+            Self::File {
+                name: _,
+                path,
+                media_type: _,
+                metadata: _,
+            } => path,
+        }
+    }
+
+    pub fn to_uri(&self) -> String {
+        format!("/{}", percent_decode_str(self.path()).decode_utf8_lossy())
+    }
+
+    pub fn is_dir(&self) -> bool {
         matches!(
             self,
             Self::Directory {

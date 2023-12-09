@@ -33,6 +33,7 @@ async fn main() -> Result<()> {
         opt.title_prefix.clone(),
         opt.sort_order()?,
         opt.reverse,
+        opt.depth,
         opt.ignore_query_params,
         opt.filter_dir.clone(),
         opt.filter_file.clone(),

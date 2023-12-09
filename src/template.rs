@@ -2,14 +2,17 @@ use anyhow::anyhow;
 use askama::Template;
 use axum::response::{Html, IntoResponse, Response};
 
-use crate::{error::AppError, model::File};
+use crate::{
+    error::AppError,
+    model::{File, FilesContainer},
+};
 
 #[derive(Template)]
 #[template(path = "rattice.html")]
 pub(crate) struct RatticeTemplate<'a> {
     uri: &'a str,
     query: &'a str,
-    files: Vec<File>,
+    containers: Vec<FilesContainer>,
     lazy: bool,
     title_prefix: &'a str,
 }
@@ -18,14 +21,14 @@ impl<'a> RatticeTemplate<'a> {
     pub fn new(
         uri: &'a str,
         query: &'a str,
-        files: Vec<File>,
+        containers: Vec<FilesContainer>,
         lazy: bool,
         title_prefix: &'a str,
     ) -> Self {
         Self {
             uri,
             query,
-            files,
+            containers,
             lazy,
             title_prefix,
         }

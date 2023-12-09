@@ -54,6 +54,10 @@ pub struct Opt {
     #[clap(arg_enum, short, long, default_value = "name", env = "RATTICE_SORT_BY")]
     sort_by: SortBy,
 
+    /// Max display depth of the directory tree
+    #[clap(short = 'D', long, default_value = "1", env = "RATTICE_DEPTH")]
+    pub depth: u32,
+
     /// Regex for filter directories
     #[clap(short = 'F', long, env = "RATTICE_FILTER_DIR")]
     pub filter_dir: Option<String>,
