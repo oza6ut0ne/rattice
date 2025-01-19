@@ -21,11 +21,10 @@
         "aarch64-darwin"
       ];
       perSystem =
-        { system, ... }:
+        { system, lib, ... }:
         let
-          inherit (inputs.nixpkgs) lib;
-
           name = "rattice";
+          pname = name;
           crossSystems = systems ++ [
             "mipsel-linux-gnu"
           ];
@@ -52,7 +51,7 @@
           buildFor =
             pkgs:
             (rustPlatformFor pkgs).buildRustPackage {
-              inherit name;
+              inherit name pname;
               src = ./.;
               version = self.shortRev or self.dirtyShortRev or "dev";
               meta.mainProgram = name;
@@ -80,8 +79,16 @@
             rec {
               default = bin;
               bin = buildFor pkgs;
+              static = buildFor pkgs.pkgsStatic;
               docker = buildDockerFor pkgs;
             }
+
+            # Cross build
+            // (lib.listToAttrs (
+              map (
+                crossSystem: lib.nameValuePair "bin-${crossSystem}" (buildFor (pkgsCrossFor crossSystem))
+              ) crossSystems
+            ))
 
             # Static cross build
             // (lib.listToAttrs (
