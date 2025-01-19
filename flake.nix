@@ -12,9 +12,10 @@
 
   outputs =
     inputs@{ self, ... }:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } rec {
       systems = [
         "x86_64-linux"
+        "armv7l-linux"
         "aarch64-linux"
         "x86_64-darwin"
         "aarch64-darwin"
@@ -22,42 +23,80 @@
       perSystem =
         { system, ... }:
         let
+          inherit (inputs.nixpkgs) lib;
+
           name = "rattice";
+          crossSystems = systems ++ [
+            "mipsel-linux-gnu"
+          ];
+
           overlays = [ (import inputs.rust-overlay) ];
           pkgs = import inputs.nixpkgs { inherit system overlays; };
 
-          rustPlatform = pkgs.makeRustPlatform {
-            cargo = pkgs.rust-bin.stable.latest.minimal;
-            rustc = pkgs.rust-bin.stable.latest.minimal;
-          };
-        in
-        {
-          packages = rec {
-            default = bin;
+          pkgsCrossFor =
+            crossSystem:
+            import inputs.nixpkgs {
+              inherit system overlays crossSystem;
+            };
 
-            bin = rustPlatform.buildRustPackage {
+          rustPlatformFor =
+            pkgs:
+            if pkgs.system == "x86_64-linux" then
+              pkgs.makeRustPlatform {
+                cargo = pkgs.rust-bin.stable.latest.minimal;
+                rustc = pkgs.rust-bin.stable.latest.minimal;
+              }
+            else
+              pkgs.rustPlatform;
+
+          buildFor =
+            pkgs:
+            (rustPlatformFor pkgs).buildRustPackage {
               inherit name;
               src = ./.;
               version = self.shortRev or self.dirtyShortRev or "dev";
+              meta.mainProgram = name;
 
               cargoLock = {
                 lockFile = ./Cargo.lock;
                 allowBuiltinFetchGit = true;
               };
-
-              meta.mainProgram = name;
             };
 
-            docker = pkgs.dockerTools.buildLayeredImage {
+          buildDockerFor =
+            pkgs:
+            pkgs.dockerTools.buildLayeredImage {
               inherit name;
               tag = "latest";
-              contents = [ bin ];
+              contents = [ (buildFor pkgs) ];
               config = {
                 WorkingDir = "/workdir";
-                Entrypoint = "/bin/rattice";
+                Entrypoint = "/bin/${name}";
               };
             };
-          };
+        in
+        {
+          packages =
+            rec {
+              default = bin;
+              bin = buildFor pkgs;
+              docker = buildDockerFor pkgs;
+            }
+
+            # Static cross build
+            // (lib.listToAttrs (
+              map (
+                crossSystem:
+                lib.nameValuePair "static-${crossSystem}" (buildFor (pkgsCrossFor crossSystem).pkgsStatic)
+              ) crossSystems
+            ))
+
+            # Docker cross build
+            // (lib.listToAttrs (
+              map (
+                crossSystem: lib.nameValuePair "docker-${crossSystem}" (buildDockerFor (pkgsCrossFor crossSystem))
+              ) crossSystems
+            ));
 
           devShells.default = pkgs.mkShell {
             buildInputs = with pkgs.rust-bin; [
