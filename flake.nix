@@ -81,10 +81,11 @@
               bin = buildFor pkgs;
               static = buildFor pkgs.pkgsStatic;
               docker = buildDockerFor pkgs;
-            }
+            };
 
+          legacyPackages =
             # Cross build
-            // (lib.listToAttrs (
+            (lib.listToAttrs (
               map (
                 crossSystem: lib.nameValuePair "bin-${crossSystem}" (buildFor (pkgsCrossFor crossSystem))
               ) crossSystems
