@@ -3,9 +3,19 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-parts.url = "github:hercules-ci/flake-parts";
+
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nix-appimage = {
+      url = "github:ralismark/nix-appimage";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -73,15 +83,21 @@
                 Entrypoint = "/bin/${name}";
               };
             };
+
+          buildAppImageFor =
+            package:
+            inputs.nix-appimage.lib.${system}.mkAppImage {
+              program = "${package}/bin/${name}";
+            };
         in
         {
-          packages =
-            rec {
-              default = bin;
-              bin = buildFor pkgs;
-              static = buildFor pkgs.pkgsStatic;
-              docker = buildDockerFor pkgs;
-            };
+          packages = rec {
+            default = bin;
+            bin = buildFor pkgs;
+            static = buildFor pkgs.pkgsStatic;
+            docker = buildDockerFor pkgs;
+            appimage = buildAppImageFor bin;
+          };
 
           legacyPackages =
             # Cross build
