@@ -111,47 +111,47 @@
     </div>
   </header>
 
-  {% for container in containers %}
-    {% if containers.len() > 1 %}
+  {%~ for container in containers %}
+    {%- if containers.len() > 1 %}
       <h2>{{ container.uri() }}</h2>
-    {% endif %}
+    {% endif -%}
     <div class="grid-container">
-      {% for file in container.files() %}
-      <div class="grid" title="{{ file.name() }}">
-        {% match file %}
+      {%- for file in container.files() %}
+        <div class="grid" title="{{ file.name() }}">
+        {%- match file %}
           {% when File::Directory with {name, path, metadata: _} %}
             <div class="name">
-              {% if generate_static %}
+              {%- if generate_static %}
                 <a href="{{ file.to_static_uri(uri) }}/index.html{{ query }}">{{ name }}/</a>
               {% else %}
                 <a href="/{{ path }}{{ query }}">{{ name }}/</a>
-              {% endif %}
+              {% endif -%}
             </div>
           {% when File::File with {name, path, media_type, metadata: _} %}
-            {% let link_path %}
-            {% if generate_static %}
-              {% let link_path = file.to_static_uri(uri) %}
+            {%- let link_path %}
+            {%- if generate_static %}
+              {%- let link_path = file.to_static_uri(uri) %}
             {% else %}
-              {% let link_path = format!("/{}", path) %}
+              {%- let link_path = format!("/{}", path) %}
             {% endif %}
-            {% if file.is_image() %}
+            {%- if file.is_image() -%}
               <a href="{{ link_path }}">
                 <img class="content" src="{{ link_path }}" {% if lazy %} loading="lazy" {% endif %}>
               </a>
-            {% else if file.is_video() %}
+            {%- else if file.is_video() -%}
               <a href="{{ link_path }}">
                 <video class="content" src="{{ link_path }}" controls preload="metadata">
               </a>
-            {% endif %}
+            {% endif -%}
             <div class="name">
               <a href="{{ link_path }}">{{ name }}</a>
             </div>
-        {% endmatch %}
+        {% endmatch -%}
       </div>
-      {% endfor %}
+      {%~ endfor %}
     </div>
     <br>
-  {% endfor %}
+  {%- endfor %}
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
