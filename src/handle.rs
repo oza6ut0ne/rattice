@@ -96,6 +96,7 @@ fn serve_dir(
         lazy,
         config.title_prefix(),
         false,
+        false,
     );
     Ok(HtmlTemplate(template).into_response())
 }

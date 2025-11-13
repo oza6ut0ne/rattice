@@ -140,6 +140,12 @@ pub struct Opt {
     )]
     pub remove_static_pages: bool,
 
+    /// Generate static pages without watermark
+    /// or remove static pages without checking watermark
+    #[clap(help_heading = "FLAGS")]
+    #[clap(long, env = "RATTICE_WITHOUT_WATERMARK")]
+    pub without_watermark: bool,
+
     /// Increase log level (-v, -vv, -vvv, -vvvv)
     #[clap(help_heading = "FLAGS")]
     #[clap(short, long, parse(from_occurrences))]

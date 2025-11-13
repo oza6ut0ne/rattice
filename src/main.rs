@@ -34,11 +34,11 @@ async fn main() -> Result<()> {
     ));
 
     if opt.generate_static_pages {
-        return generate::generate_static_pages(config);
+        return generate::generate_static_pages(config, !opt.without_watermark);
     }
 
     if opt.remove_static_pages {
-        return generate::remove_static_pages();
+        return generate::remove_static_pages(!opt.without_watermark);
     }
 
     let mut app = handle::add_handler(Router::new());

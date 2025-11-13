@@ -16,6 +16,7 @@ pub(crate) struct RatticeTemplate<'a> {
     lazy: bool,
     title_prefix: &'a str,
     generate_static: bool,
+    add_wartermark: bool,
 }
 
 impl<'a> RatticeTemplate<'a> {
@@ -26,6 +27,7 @@ impl<'a> RatticeTemplate<'a> {
         lazy: bool,
         title_prefix: &'a str,
         generate_static: bool,
+        add_wartermark: bool,
     ) -> Self {
         Self {
             uri,
@@ -34,6 +36,7 @@ impl<'a> RatticeTemplate<'a> {
             lazy,
             title_prefix,
             generate_static,
+            add_wartermark,
         }
     }
 }
