@@ -37,6 +37,10 @@ async fn main() -> Result<()> {
         return generate::generate_static_pages(config);
     }
 
+    if opt.remove_static_pages {
+        return generate::remove_static_pages();
+    }
+
     let mut app = handle::add_handler(Router::new());
     if opt.username.is_some() || opt.password.is_some() {
         tracing::info!("Basic Authentication enabled");

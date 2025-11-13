@@ -123,8 +123,22 @@ pub struct Opt {
 
     /// Generate static pages
     #[clap(help_heading = "FLAGS")]
-    #[clap(short, long, env = "RATTICE_GENERATE_STATIC_PAGES")]
+    #[clap(
+        short,
+        long,
+        conflicts_with = "remove-static-pages",
+        env = "RATTICE_GENERATE_STATIC_PAGES"
+    )]
     pub generate_static_pages: bool,
+
+    /// Remove static pages
+    #[clap(help_heading = "FLAGS")]
+    #[clap(
+        long,
+        conflicts_with = "generate-static-pages",
+        env = "RATTICE_REMOVE_STATIC_PAGES"
+    )]
+    pub remove_static_pages: bool,
 
     /// Increase log level (-v, -vv, -vvv, -vvvv)
     #[clap(help_heading = "FLAGS")]

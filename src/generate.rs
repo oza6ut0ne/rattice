@@ -47,21 +47,21 @@ pub fn generate_static_pages(config: Arc<Config>) -> Result<()> {
                             }
                         }
                     }
-                    Err(e) => tracing::error!("Failed to read file: {}", e),
+                    Err(e) => tracing::error!("Failed to read {}: {}", path, e),
                 };
             }
 
             let mut file = match File::create(&path) {
                 Ok(f) => f,
                 Err(e) => {
-                    tracing::error!("Failed to create file: {}", e);
+                    tracing::error!("Failed to create {}: {}", path, e);
                     continue;
                 }
             };
 
             match file.write_all(template.render()?.as_bytes()) {
                 Ok(_) => tracing::info!("Generated {}", path),
-                Err(e) => tracing::error!("Failed to write file: {}", e),
+                Err(e) => tracing::error!("Failed to write to {}: {}", path, e),
             };
         }
 
@@ -86,5 +86,35 @@ pub fn generate_static_pages(config: Arc<Config>) -> Result<()> {
         }
     }
 
+    Ok(())
+}
+
+pub fn remove_static_pages() -> Result<()> {
+    for entry in glob::glob("**/index.html")? {
+        let path = match entry {
+            Ok(path) => path,
+            Err(e) => {
+                tracing::error!("Failed to glob path: {}", e);
+                continue;
+            }
+        };
+
+        if let Ok(file) = File::open(&path) {
+            let mut reader = BufReader::new(file);
+            let mut line = String::new();
+            match reader.read_line(&mut line) {
+                Ok(_) => {
+                    if line.trim_end() == WARTERMARK {
+                        if let Err(e) = std::fs::remove_file(&path) {
+                            tracing::error!("Failed to remove {}: {}", path.display(), e);
+                            continue;
+                        }
+                        tracing::info!("Removed {}", path.display());
+                    }
+                }
+                Err(e) => tracing::error!("Failed to read {}: {}", path.display(), e),
+            };
+        }
+    }
     Ok(())
 }
