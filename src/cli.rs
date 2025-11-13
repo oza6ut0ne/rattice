@@ -121,6 +121,11 @@ pub struct Opt {
     #[clap(short, long, env = "RATTICE_IGNORE_QUERY_PARAMS")]
     pub ignore_query_params: bool,
 
+    /// Generate static pages
+    #[clap(help_heading = "FLAGS")]
+    #[clap(short, long, env = "RATTICE_GENERATE_STATIC_PAGES")]
+    pub generate_static_pages: bool,
+
     /// Increase log level (-v, -vv, -vvv, -vvvv)
     #[clap(help_heading = "FLAGS")]
     #[clap(short, long, parse(from_occurrences))]

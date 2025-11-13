@@ -95,11 +95,12 @@ fn serve_dir(
         containers,
         lazy,
         config.title_prefix(),
+        false,
     );
     Ok(HtmlTemplate(template).into_response())
 }
 
-fn walk_dir(
+pub(crate) fn walk_dir(
     uri: &str,
     query: &HashMap<String, String>,
     config: &Arc<Config>,

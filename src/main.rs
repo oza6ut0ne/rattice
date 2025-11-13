@@ -6,7 +6,7 @@ use std::{
 use anyhow::{anyhow, Result};
 use axum::{Extension, Router};
 use axum_server::tls_rustls::RustlsConfig;
-use rattice::{auth, config::Config, handle, trace};
+use rattice::{auth, config::Config, generate, handle, trace};
 
 mod cli;
 
@@ -22,13 +22,7 @@ async fn main() -> Result<()> {
         std::env::set_current_dir(path)?;
     }
 
-    let mut app = handle::add_handler(Router::new());
-    if opt.username.is_some() || opt.password.is_some() {
-        tracing::info!("Basic Authentication enabled");
-        app = auth::add_basic_authentication(app, &opt.username, &opt.password);
-    }
-
-    app = app.layer(Extension(Arc::new(Config::new(
+    let config = Arc::new(Config::new(
         !opt.eager,
         opt.title_prefix.clone(),
         opt.sort_order()?,
@@ -37,7 +31,19 @@ async fn main() -> Result<()> {
         opt.ignore_query_params,
         opt.filter_dir.clone(),
         opt.filter_file.clone(),
-    ))));
+    ));
+
+    if opt.generate_static_pages {
+        return generate::generate_static_pages(config);
+    }
+
+    let mut app = handle::add_handler(Router::new());
+    if opt.username.is_some() || opt.password.is_some() {
+        tracing::info!("Basic Authentication enabled");
+        app = auth::add_basic_authentication(app, &opt.username, &opt.password);
+    }
+
+    app = app.layer(Extension(config));
 
     let app = trace::add_trace_layer(app, opt.real_ip_header.clone(), opt.verbose);
     let addr = format!("{}:{}", opt.bind_address, opt.port)

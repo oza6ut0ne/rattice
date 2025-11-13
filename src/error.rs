@@ -17,6 +17,16 @@ impl From<anyhow::Error> for AppError {
     }
 }
 
+impl AppError {
+    pub fn into_internal(self) -> anyhow::Error {
+        match self {
+            Self::BadRequest(e) => e,
+            Self::NotFound(e) => e,
+            Self::InternalServerError(e) => e,
+        }
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let id: i128 = Span::current()

@@ -15,6 +15,7 @@ pub(crate) struct RatticeTemplate<'a> {
     containers: Vec<FilesContainer>,
     lazy: bool,
     title_prefix: &'a str,
+    generate_static: bool,
 }
 
 impl<'a> RatticeTemplate<'a> {
@@ -24,6 +25,7 @@ impl<'a> RatticeTemplate<'a> {
         containers: Vec<FilesContainer>,
         lazy: bool,
         title_prefix: &'a str,
+        generate_static: bool,
     ) -> Self {
         Self {
             uri,
@@ -31,6 +33,7 @@ impl<'a> RatticeTemplate<'a> {
             containers,
             lazy,
             title_prefix,
+            generate_static,
         }
     }
 }

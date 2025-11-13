@@ -35,17 +35,20 @@ impl FromStr for SortOrder {
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct FilesContainer {
     uri: String,
     files: Vec<File>,
 }
 
+#[derive(Clone)]
 pub(crate) enum MediaType {
     Image,
     Video,
     Other,
 }
 
+#[derive(Clone)]
 pub(crate) enum File {
     Directory {
         name: String,
@@ -197,6 +200,17 @@ impl File {
 
     pub fn to_uri(&self) -> String {
         format!("/{}", percent_decode_str(self.path()).decode_utf8_lossy())
+    }
+
+    pub fn to_static_uri(&self, from: &str) -> String {
+        let base_path = Path::new(from);
+        let abs_uri = self.to_uri();
+        let abs_path = Path::new(&abs_uri);
+
+        match abs_path.strip_prefix(base_path) {
+            Ok(uri) => uri.to_string_lossy().to_string(),
+            Err(_) => "..".to_owned(),
+        }
     }
 
     pub fn is_dir(&self) -> bool {
