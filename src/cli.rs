@@ -121,7 +121,7 @@ pub struct Opt {
     #[clap(short, long, env = "RATTICE_IGNORE_QUERY_PARAMS")]
     pub ignore_query_params: bool,
 
-    /// Generate static pages
+    /// Generate static HTML files
     #[clap(help_heading = "FLAGS")]
     #[clap(
         short,
@@ -131,7 +131,7 @@ pub struct Opt {
     )]
     pub generate_static_pages: bool,
 
-    /// Remove static pages
+    /// Remove static HTML files
     #[clap(help_heading = "FLAGS")]
     #[clap(
         long,
@@ -140,8 +140,8 @@ pub struct Opt {
     )]
     pub remove_static_pages: bool,
 
-    /// Generate static pages without watermark
-    /// or remove static pages without checking watermark
+    /// Generate static HTML files without watermark
+    /// or remove static HTML files without checking watermark
     #[clap(help_heading = "FLAGS")]
     #[clap(long, env = "RATTICE_WITHOUT_WATERMARK")]
     pub without_watermark: bool,
