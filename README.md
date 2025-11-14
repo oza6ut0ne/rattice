@@ -81,12 +81,17 @@ OPTIONS:
             RATTICE_REAL_IP_HEADER=]
 
 FLAGS:
-    -r, --reverse                Reverse sort order [env: RATTICE_REVERSE=]
-    -e, --eager                  Disable lazy image loading [env: RATTICE_EAGER=]
-    -i, --ignore-query-params    Ignore query parameters [env: RATTICE_IGNORE_QUERY_PARAMS=]
-    -v, --verbose                Increase log level (-v, -vv, -vvv, -vvvv)
-    -h, --help                   Print help information
-    -V, --version                Print version information
+    -r, --reverse                  Reverse sort order [env: RATTICE_REVERSE=]
+    -e, --eager                    Disable lazy image loading [env: RATTICE_EAGER=]
+    -i, --ignore-query-params      Ignore query parameters [env: RATTICE_IGNORE_QUERY_PARAMS=]
+    -g, --generate-static-pages    Generate static HTML files [env: RATTICE_GENERATE_STATIC_PAGES=]
+        --remove-static-pages      Remove static HTML files [env: RATTICE_REMOVE_STATIC_PAGES=]
+        --without-watermark        Generate static HTML files without watermark or remove static
+                                   HTML files without checking watermark [env:
+                                   RATTICE_WITHOUT_WATERMARK=]
+    -v, --verbose                  Increase log level (-v, -vv, -vvv, -vvvv)
+    -h, --help                     Print help information
+    -V, --version                  Print version information
 ```
 
 ## License
