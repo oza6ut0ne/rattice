@@ -6,7 +6,7 @@
 A media viewer for web browsers written in Rust.  
 Images and videos are supported.
 
-![screencap](https://raw.githubusercontent.com/oza6ut0ne/rattice/v0.5.0/pic/screencap.png)
+![screencap](https://raw.githubusercontent.com/oza6ut0ne/rattice/v0.6.0/pic/screencap.png)
 
 *Screenshot of Rattice running with [MIT-67 Indoor Scene Recognition Dataset](http://web.mit.edu/torralba/www/indoor.html) images.*
 
@@ -29,7 +29,7 @@ or download prebuilt binary from [Releases](https://github.com/oza6ut0ne/rattice
 
 ```shellsession
 $ rattice --help
-Rattice 0.5.0
+Rattice 0.6.0
 
 USAGE:
     rattice [OPTIONS] [PORT]
