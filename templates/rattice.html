@@ -138,7 +138,7 @@
               <a href="{{ link_path }}">
                 <img class="content" src="{{ link_path }}" {% if lazy %} loading="lazy" {% endif %}>
               </a>
-            {%- else if file.is_video() -%}
+            {% else if file.is_video() -%}
               <a href="{{ link_path }}">
                 <video class="content" src="{{ link_path }}" controls preload="metadata">
               </a>
